@@ -167,7 +167,7 @@ export default function Home() {
     
     const encodedMessage = encodeURIComponent(mensagem);
     const whatsappUrl = `https://wa.me/?text=${encodedMessage}`;
-    window.open(whatsappUrl, '_blank');
+    window.open(whatsappUrl, '_blank' );
   };
 
   // Detectar evento de instalação de PWA
@@ -219,7 +219,7 @@ export default function Home() {
               <button className="btn primary no-print" onClick={handleInstallApp} style={{ marginRight: '8px' }}>
                 Instalar App
               </button>
-            )}
+             )}
             <button className="btn ghost no-print" onClick={handleShareWhatsApp} style={{ marginRight: '8px' }}>Compartilhar WhatsApp</button>
             <button className="btn ghost no-print" onClick={handlePrint}>Imprimir PDF</button>
             <span className="badge no-print">v1.5.0 • Telaço</span>
@@ -241,7 +241,7 @@ export default function Home() {
             </div>
             <div className="bd">
               <div className="inputs">
-                <div className="control" style={{ gridColumn: 'span 12' }}>
+                <div className="control" style={{ gridColumn: 'span 8' }}>
                   <label>Tipo de Produto *</label>
                   <Select value={tipoProduto} onValueChange={setTipoProduto}>
                     <SelectTrigger className="w-full" style={{
@@ -430,3 +430,4 @@ export default function Home() {
     </div>
   );
 }
+
