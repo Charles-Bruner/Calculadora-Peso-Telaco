@@ -87,7 +87,7 @@ html.dark, body.dark {
   --foreground: oklch(0.95 0.006 285); /* Ajustado conforme sua sugestão */
   --card: oklch(0.21 0.006 285.885);
   --card-foreground: oklch(0.85 0.005 65);
-  --popover: oklch(0.141 0.005 285.823); /* Corrigido para dark mode */
+  --popover: oklch(0.141 0.005 285.823); /* Aplicado ao html/body */
   --popover-foreground: oklch(0.95 0.006 285); /* Ajustado conforme sua sugestão */
   --secondary: oklch(0.24 0.006 286.033);
   --secondary-foreground: oklch(0.7 0.005 65);
@@ -117,7 +117,6 @@ html.dark, body.dark {
 html.dark [data-radix-portal],
 body.dark [data-radix-portal] {
   --popover: oklch(0.141 0.005 285.823);
-  --popover-foreground: oklch(0.85 0.005 65); /* Usar foreground claro para o texto do popover */
   --foreground: oklch(0.95 0.006 285);
 }
 
@@ -183,5 +182,3 @@ body.dark [data-radix-portal] {
     }
   }
 }
-
-

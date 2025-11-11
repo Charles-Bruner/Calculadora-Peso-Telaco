@@ -20,23 +20,30 @@ export default function Home() {
     'PENEIRA GALVANIZADO',
     'PENEIRA INOX AISI 304',
     'PENEIRA INOX AISI 316',
-    'PENEIRA INOX AISI 430',
-    'PENEIRA INOX AISI 430 AUTOLIMPANTE VENO',
-    'PENEIRA INOX AISI 430 AUTOLIMPANTE SERPA',
-    'PENEIRA INOX AISI 430 HARPA III',
+    'TELA PV ATC 1045',
+    'TELA PV ATC 1050',
+    'TELA PV ATC 1065',
+    'TELA PV ATC 1065 AUTOLIMPANTE VENO',
+    'TELA PV ATC 1065 AUTOLIMPANTE SERPA',
+    'TELA PV ATC 1065 HARPA III',
+    'TELA PV GALVANIZADO',
+    'TELA PV INOX AISI 304',
+    'TELA PV INOX AISI 316'
   ];
 
   // Estados para os campos de entrada
-  const [produto, setProduto] = useState<string>('');
-  const [malha, setMalha] = useState<string>('19.0');
-  const [fio, setFio] = useState<string>('9');
-  const [comprimento, setComprimento] = useState<string>('2500');
-  const [perda, setPerda] = useState<string>('100');
-  const [largura, setLargura] = useState<string>('1980');
-  const [gancho, setGancho] = useState<string>('80');
-  const [precoKg, setPrecoKg] = useState<string>('12.50');
-  const [quantidade, setQuantidade] = useState<string>('1');
-  const [acabamentoTipo, setAcabamentoTipo] = useState<string>(''); // Novo campo
+  const [tipoProduto, setTipoProduto] = useState('');
+  const [malha, setMalha] = useState('');
+  const [fio, setFio] = useState('');
+  const [comp, setComp] = useState('');
+  const [perda, setPerda] = useState('');
+  const [larg, setLarg] = useState('');
+  const [gancho, setGancho] = useState('');
+  const [precoKg, setPrecoKg] = useState('');
+  const [qtd, setQtd] = useState('');
+  const [showConstantes, setShowConstantes] = useState(false);
+  const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
+  const [showInstallButton, setShowInstallButton] = useState(false);
 
   // Estados para os resultados
   const [pesoFio, setPesoFio] = useState<number | null>(null);
@@ -46,97 +53,91 @@ export default function Home() {
   const [precoM2, setPrecoM2] = useState<number | null>(null);
   const [precoTotal, setPrecoTotal] = useState<number | null>(null);
 
-  // Estado para o botão de instalação (PWA)
-  const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
+  // Constantes
+  const massa = 6.165;
+  const c1 = 1.1;
+  const c2 = 2;
+  const c3 = 1000;
 
-  useEffect(() => {
-    const handler = (e: Event) => {
-      e.preventDefault();
-      setDeferredPrompt(e as BeforeInstallPromptEvent);
-    };
-    window.addEventListener('beforeinstallprompt', handler);
-    return () => window.removeEventListener('beforeinstallprompt', handler);
-  }, []);
+  // Função para converter string em número
+  const val = (value: string): number => {
+    const v = (value ?? '').toString().replace(',', '.');
+    const num = parseFloat(v);
+    return isNaN(num) ? 0 : num;
+  };
 
-  const handleInstallClick = () => {
-    if (deferredPrompt) {
-      deferredPrompt.prompt();
-      deferredPrompt.userChoice.then((choiceResult) => {
-        if (choiceResult.outcome === 'accepted') {
-          console.log('Usuário aceitou a instalação do PWA');
-        } else {
-          console.log('Usuário recusou a instalação do PWA');
-        }
-        setDeferredPrompt(null);
-      });
+  // Funcao para validar campos obrigatorios
+  const validateInputs = (): boolean => {
+    if (!tipoProduto) {
+      return false;
     }
+    const requiredFields = [malha, fio, comp, perda, larg];
+    return requiredFields.every(field => val(field) > 0);
   };
 
-  const formatNumber = (num: number | null) => {
-    if (num === null) return '—';
-    return num.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  // Função para formatar números em pt-BR
+  const formatNumber = (num: number, decimals: number = 3): string => {
+    return new Intl.NumberFormat('pt-BR', { minimumFractionDigits: decimals, maximumFractionDigits: decimals }).format(num);
   };
 
-  const formatCurrency = (num: number | null) => {
-    if (num === null) return '—';
-    return num.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+  // Função para formatar moeda em pt-BR
+  const formatCurrency = (num: number): string => {
+    return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(num);
   };
 
-  const calcular = () => {
-    const m = parseFloat(malha.replace(',', '.'));
-    const f = parseFloat(fio.replace(',', '.'));
-    const c = parseFloat(comprimento.replace(',', '.'));
-    const p = parseFloat(perda.replace(',', '.'));
-    const l = parseFloat(largura.replace(',', '.'));
-    const g = parseFloat(gancho.replace(',', '.'));
-    const pk = parseFloat(precoKg.replace(',', '.'));
-    const q = parseFloat(quantidade.replace(',', '.'));
+  // Funcao para calcular
+  const calc = () => {
+      if (!validateInputs()) {
+        alert('Por favor, selecione um Tipo de Produto e preencha os campos obrigatorios (Malha, Fio, Comprimento, Perda, Largura) com valores maiores que zero.');
+        return;
+      }
 
-    if (isNaN(m) || isNaN(f) || isNaN(c) || isNaN(p) || isNaN(l) || isNaN(g) || isNaN(pk) || isNaN(q)) {
-      alert('Por favor, preencha todos os campos obrigatórios com valores numéricos válidos.');
-      return;
-    }
+    const malhaNum = val(malha);
+    const fioNum = val(fio);
+    const compNum = val(comp);
+    const perdaNum = val(perda);
+    const largNum = val(larg);
+    const ganhoNum = val(gancho);
+    const precoKgNum = val(precoKg);
+    const qtdNum = Math.max(1, val(qtd)) || 1;
 
-    // Constantes (fixas)
-    const densidadeAco = 7.85; // g/cm³
-    const constanteFio = 0.006165; // Constante para cálculo de peso do fio (fórmula: D² * 0.006165)
+    // Fórmula 1: Peso do Fio (kg/m)
+    const pesoFioCalc = ((fioNum * fioNum) * massa) / c3;
 
-    // 1. Peso do Fio (kg/m)
-    const pesoFioCalc = constanteFio * (f * f);
+    // Fórmula 2: Peso da Tela (kg/m²)
+    const pesoM2Calc = (c3 / (fioNum + malhaNum)) * c2 * c1 * pesoFioCalc;
+
+    // Fórmula 3: Área (m²)
+    const areaTotalCalc = Math.max(0, ((largNum + ganhoNum) / c3) * ((compNum + perdaNum) / c3));
+
+    // Fórmula 4: Peso Total (kg)
+    const pesoTotalCalc = pesoM2Calc * areaTotalCalc * qtdNum;
+
+    // Fórmula 5: Preço m² (R$)
+    const precoM2Calc = pesoM2Calc * precoKgNum;
+
+    // Fórmula 6: Preço Total (R$)
+    const precoTotalCalc = pesoTotalCalc * precoKgNum;
+
     setPesoFio(pesoFioCalc);
-
-    // 2. Peso da Tela (kg/m²)
-    const pesoTelaM2 = (pesoFioCalc * 1000) / (m + f);
-    setPesoM2(pesoTelaM2);
-
-    // 3. Área Total (m²)
-    const areaTotalCalc = ((c - p) / 1000) * ((l - g) / 1000) * q;
+    setPesoM2(pesoM2Calc);
     setAreaTotal(areaTotalCalc);
-
-    // 4. Peso Total (kg)
-    const pesoTotalCalc = pesoTelaM2 * areaTotalCalc;
     setPesoTotal(pesoTotalCalc);
-
-    // 5. Preço m² (R$)
-    const precoM2Calc = pesoTelaM2 * pk;
     setPrecoM2(precoM2Calc);
-
-    // 6. Preço Total (R$)
-    const precoTotalCalc = pesoTotalCalc * pk;
     setPrecoTotal(precoTotalCalc);
   };
 
-  const limpar = () => {
-    setProduto('');
-    setMalha('19.0');
-    setFio('9');
-    setComprimento('2500');
-    setPerda('100');
-    setLargura('1980');
-    setGancho('80');
-    setPrecoKg('12.50');
-    setQuantidade('1');
-    setAcabamentoTipo('');
+  // Funcao para limpar
+  const reset = () => {
+    setTipoProduto('');
+    setMalha('');
+    setFio('');
+    setComp('');
+    setPerda('');
+    setLarg('');
+    setGancho('');
+    setPrecoKg('');
+    setQtd('');
     setPesoFio(null);
     setPesoM2(null);
     setAreaTotal(null);
@@ -145,154 +146,249 @@ export default function Home() {
     setPrecoTotal(null);
   };
 
+  // Funcao para imprimir
+  const handlePrint = () => {
+    window.print();
+  };
+
+  // Funcao para compartilhar via WhatsApp com formato especifico
   const handleShareWhatsApp = async () => {
-    if (pesoTotal === null) {
-      alert('Por favor, calcule o peso antes de compartilhar.');
+    if (pesoFio === null || pesoM2 === null || areaTotal === null || pesoTotal === null || precoM2 === null || precoTotal === null) {
+      alert('Por favor, calcule os valores primeiro antes de compartilhar.');
       return;
     }
 
-    // 1. Geração do PDF e Upload (Simulado)
-    const pdfUrl = await generateAndSharePDF({
-      produto,
-      malha,
-      fio,
-      comprimento,
-      perda,
-      largura,
-      gancho,
-      precoKg,
-      quantidade,
-      acabamentoTipo,
-      pesoFio,
-      pesoM2,
-      areaTotal,
-      pesoTotal,
-      precoM2,
-      precoTotal,
-    });
-
-    // 2. Montagem da Mensagem
-    const acabamento = acabamentoTipo ? ` - ${acabamentoTipo}` : '';
-    const primeiraLinha = `${produto} - AB ${formatNumber(parseFloat(malha))} MM - FIO ${formatNumber(parseFloat(fio))} MM - ${comprimento} X ${largura} MM - ${gancho} MM${acabamento}`;
-    const segundaLinha = `Peso Bruto: ${formatNumber(pesoTotal)} Kg`;
-
-    const mensagem = `${primeiraLinha}\n${segundaLinha}\n\nConfira o orçamento completo: ${pdfUrl}`;
-
-    // 3. Compartilhamento
-    const whatsappUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(mensagem )}`;
+    const malhaFormatada = parseFloat(malha).toFixed(2).replace('.', ',');
+    const fioFormatado = parseFloat(fio).toFixed(2).replace('.', ',');
+    const compFormatado = parseInt(comp);
+    const largFormatado = parseInt(larg);
+    
+    const mensagem = `${tipoProduto} - AB ${malhaFormatada} MM - FIO ${fioFormatado} MM - ${compFormatado} X ${largFormatado} MM`;
+    
+    const encodedMessage = encodeURIComponent(mensagem);
+    const whatsappUrl = `https://wa.me/?text=${encodedMessage}`;
     window.open(whatsappUrl, '_blank');
+  };
+
+  // Detectar evento de instalação de PWA
+  useEffect(() => {
+    const handleBeforeInstallPrompt = (e: Event) => {
+      e.preventDefault();
+      setDeferredPrompt(e as BeforeInstallPromptEvent);
+      setShowInstallButton(true);
+    };
+
+    const handleAppInstalled = () => {
+      setShowInstallButton(false);
+      setDeferredPrompt(null);
+    };
+
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    window.addEventListener('appinstalled', handleAppInstalled);
+
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+      window.removeEventListener('appinstalled', handleAppInstalled);
+    };
+  }, []);
+
+  // Função para instalar o app
+  const handleInstallApp = async () => {
+    if (!deferredPrompt) return;
+
+    deferredPrompt.prompt();
+    const { outcome } = await deferredPrompt.userChoice;
+    console.log(`User response to the install prompt: ${outcome}`);
+    setDeferredPrompt(null);
+    setShowInstallButton(false);
   };
 
   return (
     <div className="calculator-container">
       <div className="wrap">
         <header>
-          <div className="logo">
-            <div className="hash">#</div>
-            <div className="text">TELAÇO</div>
+          <div className="brand">
+            <img src="https://i.postimg.cc/gctNgQm4/logo-Telaco-Laranja-horizontal.png" alt="Telaço" />
+            <div>
+              <h1>Calculadora de Peso de Tela</h1>
+              <div className="hint">Tela para peneiramento industrial — modelo de cálculo com constantes configuráveis</div>
+            </div>
           </div>
-          <div className="title">
-            <h1>Calculadora de Peso de Tela</h1>
-            <p>Tela para peneiramento industrial – modelo de cálculo com constantes configuráveis</p>
-          </div>
-          <div className="actions">
-            {deferredPrompt && (
-              <button className="btn-install" onClick={handleInstallClick}>
+          <div className="header-actions">
+            {showInstallButton && (
+              <button className="btn primary no-print" onClick={handleInstallApp} style={{ marginRight: '8px' }}>
                 Instalar App
               </button>
             )}
-            <button className="btn-share" onClick={handleShareWhatsApp}>
-              Compartilhar WhatsApp
-            </button>
-            <button className="btn-pdf" onClick={() => alert('Funcionalidade de PDF em desenvolvimento.')}>
-              Imprimir PDF
-            </button>
-            <div className="version">v1.5.0 - Telaço</div>
+            <button className="btn ghost no-print" onClick={handleShareWhatsApp} style={{ marginRight: '8px' }}>Compartilhar WhatsApp</button>
+            <button className="btn ghost no-print" onClick={handlePrint}>Imprimir PDF</button>
+            <span className="badge no-print">v1.5.0 • Telaço</span>
           </div>
         </header>
 
-        <section className="card">
-          <div className="card-header">
-            <h2>ENTRADAS</h2>
-            <div className="toggle-constants">
-              <input type="checkbox" id="exibir-constantes" />
-              <label htmlFor="exibir-constantes">Exibir Constantes</label>
+        <section className="grid">
+          <div className="card" style={{ gridColumn: 'span 12' }}>
+            <div className="hd">
+              <h3>Entradas</h3>
+              <label className="toggle-label">
+                <input
+                  type="checkbox"
+                  checked={showConstantes}
+                  onChange={(e) => setShowConstantes(e.target.checked)}
+                />
+                {' '}Exibir Constantes
+              </label>
+            </div>
+            <div className="bd">
+              <div className="inputs">
+                <div className="control" style={{ gridColumn: 'span 12' }}>
+                  <label>Tipo de Produto *</label>
+                  <Select value={tipoProduto} onValueChange={setTipoProduto}>
+                    <SelectTrigger className="w-full" style={{
+                      width: '100%',
+                      padding: '10px',
+                      borderRadius: '8px',
+                      border: '1px solid #333',
+                      backgroundColor: '#1a1a1a',
+                      color: '#fff',
+                      fontSize: '14px',
+                      cursor: 'pointer'
+                    }}>
+                      <SelectValue placeholder="-- Selecione um tipo de produto --" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {PRODUCT_TYPES.map((type) => (
+                        <SelectItem key={type} value={type}>
+                          {type}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="control">
+                  <label>Malha (mm)</label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    placeholder="ex.: 19,05"
+                    value={malha}
+                    onChange={(e) => setMalha(e.target.value)}
+                  />
+                </div>
+                <div className="control">
+                  <label>Fio (mm)</label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    placeholder="ex.: 9"
+                    value={fio}
+                    onChange={(e) => setFio(e.target.value)}
+                  />
+                </div>
+                <div className="control">
+                  <label>Comprimento (mm)</label>
+                  <input
+                    type="number"
+                    step="1"
+                    placeholder="ex.: 2500"
+                    value={comp}
+                    onChange={(e) => setComp(e.target.value)}
+                  />
+                </div>
+                <div className="control">
+                  <label>Perda (mm)</label>
+                  <input
+                    type="number"
+                    step="1"
+                    placeholder="ex.: 100"
+                    value={perda}
+                    onChange={(e) => setPerda(e.target.value)}
+                  />
+                </div>
+                <div className="control">
+                  <label>Largura (mm)</label>
+                  <input
+                    type="number"
+                    step="1"
+                    placeholder="ex.: 1980"
+                    value={larg}
+                    onChange={(e) => setLarg(e.target.value)}
+                  />
+                </div>
+                <div className="control">
+                  <label>Gancho (mm)</label>
+                  <input
+                    type="number"
+                    step="1"
+                    placeholder="ex.: 80"
+                    value={gancho}
+                    onChange={(e) => setGancho(e.target.value)}
+                  />
+                </div>
+
+                {/* Parâmetros bloqueados (listas suspensas) */}
+                {showConstantes && (
+                  <div className="constantes-container">
+                    <div className="control">
+                      <label>Massa do material (g/cm³)</label>
+                      <select disabled>
+                        <option value="6.165">6,165 g/cm³</option>
+                      </select>
+                    </div>
+                    <div className="control">
+                      <label>Constante 1</label>
+                      <select disabled>
+                        <option value="1.1">1,10</option>
+                      </select>
+                    </div>
+                    <div className="control">
+                      <label>Constante 2</label>
+                      <select disabled>
+                        <option value="2">2</option>
+                      </select>
+                    </div>
+                    <div className="control">
+                      <label>Constante 3</label>
+                      <select disabled>
+                        <option value="1000">1000</option>
+                      </select>
+                    </div>
+                  </div>
+                )}
+
+                <div className="control">
+                  <label>Preço do Kg (R$)</label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    placeholder="ex.: 12,50"
+                    value={precoKg}
+                    onChange={(e) => setPrecoKg(e.target.value)}
+                  />
+                </div>
+                <div className="control">
+                  <label>Quantidade</label>
+                  <input
+                    type="number"
+                    step="1"
+                    placeholder="1"
+                    value={qtd}
+                    onChange={(e) => setQtd(e.target.value)}
+                  />
+                </div>
+              </div>
+              <div className="actions">
+                <button className="btn primary no-print" onClick={calc}>Calcular</button>
+                <button className="btn ghost no-print" onClick={reset}>Limpar</button>
+              </div>
             </div>
           </div>
-          <div className="card-body">
-            <div className="select-control">
-              <label htmlFor="produto">Tipo de Produto *</label>
-              <Select value={produto} onValueChange={setProduto}>
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="-- Selecione um tipo de produto --" />
-                </SelectTrigger>
-                <SelectContent>
-                  {PRODUCT_TYPES.map((type) => (
-                    <SelectItem key={type} value={type}>
-                      {type}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
 
-            <div className="inputs">
-              <div className="control">
-                <label htmlFor="malha">Malha (mm)</label>
-                <input id="malha" type="text" value={malha} onChange={(e) => setMalha(e.target.value)} placeholder="ex: 19.0" />
-              </div>
-              <div className="control">
-                <label htmlFor="fio">Fio (mm)</label>
-                <input id="fio" type="text" value={fio} onChange={(e) => setFio(e.target.value)} placeholder="ex: 9" />
-              </div>
-              <div className="control">
-                <label htmlFor="comprimento">Comprimento (mm)</label>
-                <input id="comprimento" type="text" value={comprimento} onChange={(e) => setComprimento(e.target.value)} placeholder="ex: 2500" />
-              </div>
-              <div className="control">
-                <label htmlFor="perda">Perda (mm)</label>
-                <input id="perda" type="text" value={perda} onChange={(e) => setPerda(e.target.value)} placeholder="ex: 100" />
-              </div>
-              <div className="control">
-                <label htmlFor="largura">Largura (mm)</label>
-                <input id="largura" type="text" value={largura} onChange={(e) => setLargura(e.target.value)} placeholder="ex: 1980" />
-              </div>
-              <div className="control">
-                <label htmlFor="gancho">Gancho (mm)</label>
-                <input id="gancho" type="text" value={gancho} onChange={(e) => setGancho(e.target.value)} placeholder="ex: 80" />
-              </div>
-              <div className="control">
-                <label htmlFor="precoKg">Preço do Kg (R$)</label>
-                <input id="precoKg" type="text" value={precoKg} onChange={(e) => setPrecoKg(e.target.value)} placeholder="ex: 12.50" />
-              </div>
-              <div className="control">
-                <label htmlFor="quantidade">Quantidade</label>
-                <input id="quantidade" type="text" value={quantidade} onChange={(e) => setQuantidade(e.target.value)} placeholder="1" />
-              </div>
-              {/* Novo Campo Acabamento/Tipo */}
-              <div className="control full-width">
-                <label htmlFor="acabamentoTipo">Acabamento/Tipo (Opcional)</label>
-                <input id="acabamentoTipo" type="text" value={acabamentoTipo} onChange={(e) => setAcabamentoTipo(e.target.value)} placeholder="ex: SEM GANCHO - OND VB" />
-              </div>
+          <div className="card" style={{ gridColumn: 'span 12' }}>
+            <div className="hd">
+              <h3>Resultados</h3>
             </div>
-
-            <div className="actions">
-              <button className="btn-calculate" onClick={calcular}>
-                Calcular
-              </button>
-              <button className="btn-clear" onClick={limpar}>
-                Limpar
-              </button>
-            </div>
-          </div>
-        </section>
-
-        <section className="card">
-          <div className="card-header">
-            <h2>RESULTADOS</h2>
-          </div>
-          <div className="card-body">
-            <div className="results-grid">
+            <div className="bd">
               <div className="results">
                 <div className="kpi">
                   <h4>Peso do Fio (kg/m)</h4>
@@ -334,6 +430,3 @@ export default function Home() {
     </div>
   );
 }
-
-
-
