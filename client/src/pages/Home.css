@@ -207,7 +207,7 @@ header {
 
 .kpi:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 20px rgba(240, 100, 0, 0.15);
+  box-shadow: 0 8px 20px rgba(240, 100, 0, 0.3);
 }
 
 .kpi h4 {
@@ -329,15 +329,15 @@ footer {
 
 @media (max-width: 640px) {
   .inputs {
-    grid-template-columns: 1fr;
+    grid-template-columns: 1fr; /* Um campo por linha */
   }
 
   .control {
-    grid-column: span 1;
+    grid-column: span 1 / -1; /* Força o campo a ocupar a largura total */
   }
 
   .constantes-container {
-    grid-column: span 1;
+    grid-column: span 1 / -1;
     grid-template-columns: 1fr;
   }
 
@@ -530,4 +530,5 @@ footer {
     color: #666;
   }
 }
+
 
