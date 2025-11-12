@@ -168,7 +168,7 @@ export default function Home() {
     // Usar formatNumber para garantir a formatação correta do peso total (com 2 casas decimais)
     const pesoTotalFormatado = formatNumber(pesoTotal, 2);
     
-    const mensagem = `${tipoProduto} - AB ${malhaFormatada} MM - FIO ${fioFormatado} MM - ${compFormatado} X ${largFormatado} MM`;
+    let mensagem = `${tipoProduto} - AB ${malhaFormatada} MM - FIO ${fioFormatado} MM - ${compFormatado} X ${largFormatado} MM`;
 
     // Adicionar Acabamento/Tipo se preenchido
     if (acabamentoTipo.trim() !== '') {
