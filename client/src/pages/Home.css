@@ -531,4 +531,51 @@ footer {
   }
 }
 
+/* Força o popover do Radix (SelectContent) a seguir o tema escuro */
+[data-radix-popper-content-wrapper] {
+  z-index: 9999; /* aparece acima dos cards */
+}
+
+[data-radix-popper-content-wrapper] > div {
+  background: var(--card);
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 12px;
+  box-shadow: var(--shadow);
+  overflow: hidden;
+}
+
+/* Área rolável interna (quando houver) */
+[data-radix-popper-content-wrapper] > div > div {
+  max-height: 320px;
+  overflow-y: auto;
+}
+
+/* Itens do select (Radix usa data-attributes) */
+[data-radix-popper-content-wrapper] [data-highlighted] {
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+}
+
+[data-radix-popper-content-wrapper] [data-state="checked"] {
+  background: rgba(240, 100, 0, 0.14); /* laranja sutil da sua brand */
+  color: #fff;
+}
+
+/* Scrollbar (opcional, para combinar com o tema) */
+[data-radix-popper-content-wrapper] *::-webkit-scrollbar {
+  width: 10px;
+}
+[data-radix-popper-content-wrapper] *::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.06);
+}
+[data-radix-popper-content-wrapper] *::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.22);
+  border-radius: 999px;
+}
+[data-radix-popper-content-wrapper] *::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.32);
+}
+
+
 
