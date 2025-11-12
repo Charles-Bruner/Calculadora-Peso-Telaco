@@ -279,6 +279,16 @@ export default function Home() {
                   </Select>
                 </div>
                 <div className="control">
+                  <label>Acabamento/Tipo (Opcional)</label>
+                  <input
+                    type="text"
+                    placeholder="Ex: SEM GANCHO - OND VB"
+                    value={acabamentoTipo}
+                    onChange={(e) => setAcabamentoTipo(e.target.value.toUpperCase())}
+                    style={{ textTransform: 'uppercase' }}
+                  />
+                </div>
+                <div className="control">
                   <label>Malha (mm)</label>
                   <input
                     type="number"
@@ -338,17 +348,7 @@ export default function Home() {
                     onChange={(e) => setGancho(e.target.value)}
                   />
                 </div>
-                <div className="control">
-                  <label>Acabamento/Tipo (Opcional)</label>
-                  <input
-                    type="text"
-                    placeholder="Ex: SEM GANCHO - OND VB"
-                    value={acabamentoTipo}
-                    onChange={(e) => setAcabamentoTipo(e.target.value.toUpperCase())}
-                    style={{ textTransform: 'uppercase' }}
-                  />
-                </div>
-
+                
                 {/* Parâmetros bloqueados (listas suspensas) */}
                 {showConstantes && (
                   <div className="constantes-container">
