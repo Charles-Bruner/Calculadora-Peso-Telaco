@@ -5,11 +5,10 @@ import { generateAndSharePDF } from '../utils/pdfGenerator';
 
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>;
-  userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>;
 }
 
 export default function Home() {
-  // Tipos de produto
+  // Constantes
   const PRODUCT_TYPES = [
     'PENEIRA ATC 1045',
     'PENEIRA ATC 1050',
@@ -28,8 +27,13 @@ export default function Home() {
     'TELA PV ATC 1065 HARPA III',
     'TELA PV GALVANIZADO',
     'TELA PV INOX AISI 304',
-    'TELA PV INOX AISI 316'
+    'TELA PV INOX AISI 316',
   ];
+
+  const massa = 6.165;
+  const c1 = 1.1;
+  const c2 = 2;
+  const c3 = 1000;
 
   // Estados para os campos de entrada
   const [tipoProduto, setTipoProduto] = useState('');
@@ -39,8 +43,9 @@ export default function Home() {
   const [perda, setPerda] = useState('');
   const [larg, setLarg] = useState('');
   const [gancho, setGancho] = useState('');
+  const [acabamentoTipo, setAcabamentoTipo] = useState(''); // NOVO CAMPO
   const [precoKg, setPrecoKg] = useState('');
-  const [qtd, setQtd] = useState('');
+  const [qtd, setQtd] = useState('1');
   const [showConstantes, setShowConstantes] = useState(false);
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [showInstallButton, setShowInstallButton] = useState(false);
@@ -53,26 +58,10 @@ export default function Home() {
   const [precoM2, setPrecoM2] = useState<number | null>(null);
   const [precoTotal, setPrecoTotal] = useState<number | null>(null);
 
-  // Constantes
-  const massa = 6.165;
-  const c1 = 1.1;
-  const c2 = 2;
-  const c3 = 1000;
-
-  // Função para converter string em número
-  const val = (value: string): number => {
-    const v = (value ?? '').toString().replace(',', '.');
-    const num = parseFloat(v);
+  // Função auxiliar para converter string para número (0 se inválido)
+  const val = (v: string): number => {
+    const num = parseFloat(v.replace(',', '.'));
     return isNaN(num) ? 0 : num;
-  };
-
-  // Funcao para validar campos obrigatorios
-  const validateInputs = (): boolean => {
-    if (!tipoProduto) {
-      return false;
-    }
-    const requiredFields = [malha, fio, comp, perda, larg];
-    return requiredFields.every(field => val(field) > 0);
   };
 
   // Função para formatar números em pt-BR
@@ -83,6 +72,15 @@ export default function Home() {
   // Função para formatar moeda em pt-BR
   const formatCurrency = (num: number): string => {
     return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(num);
+  };
+
+  // Funcao para validar campos obrigatorios
+  const validateInputs = (): boolean => {
+    if (!tipoProduto) {
+      return false;
+    }
+    const requiredFields = [malha, fio, comp, perda, larg];
+    return requiredFields.every(field => val(field) > 0);
   };
 
   // Funcao para calcular
@@ -136,8 +134,9 @@ export default function Home() {
     setPerda('');
     setLarg('');
     setGancho('');
+    setAcabamentoTipo('');
     setPrecoKg('');
-    setQtd('');
+    setQtd('1');
     setPesoFio(null);
     setPesoM2(null);
     setAreaTotal(null);
@@ -146,51 +145,47 @@ export default function Home() {
     setPrecoTotal(null);
   };
 
-  // Funcao para imprimir
-  const handlePrint = () => {
-    window.print();
-  };
-
   // Funcao para compartilhar via WhatsApp com formato especifico
   const handleShareWhatsApp = async () => {
-    if (pesoFio === null || pesoM2 === null || areaTotal === null || pesoTotal === null || precoM2 === null || precoTotal === null) {
+    if (pesoTotal === null) {
       alert('Por favor, calcule os valores primeiro antes de compartilhar.');
       return;
     }
 
-    const malhaFormatada = parseFloat(malha).toFixed(2).replace('.', ',');
-    const fioFormatado = parseFloat(fio).toFixed(2).replace('.', ',');
-    const compFormatado = parseInt(comp);
-    const largFormatado = parseInt(larg);
+    const malhaFormatada = formatNumber(val(malha), 2).replace('.', ',');
+    const fioFormatado = formatNumber(val(fio), 2).replace('.', ',');
+    const compFormatado = parseInt(comp) || 0;
+    const largFormatado = parseInt(larg) || 0;
     
-    const mensagem = `${tipoProduto} - AB ${malhaFormatada} MM - FIO ${fioFormatado} MM - ${compFormatado} X ${largFormatado} MM`;
+    // Usar formatNumber para garantir a formatação correta do peso total (com 2 casas decimais)
+    const pesoTotalFormatado = formatNumber(pesoTotal, 2); 
+
+    let mensagem = `${tipoProduto} - AB ${malhaFormatada} MM - FIO ${fioFormatado} MM - ${compFormatado} X ${largFormatado} MM`;
+    
+    // Adicionar Acabamento/Tipo se preenchido
+    if (acabamentoTipo.trim() !== '') {
+      mensagem += ` - ${acabamentoTipo.trim()}`;
+    }
+
+    // Adicionar Peso Bruto na próxima linha
+    mensagem += `\n\nPeso Bruto: ${pesoTotalFormatado} Kg`;
     
     const encodedMessage = encodeURIComponent(mensagem);
     const whatsappUrl = `https://wa.me/?text=${encodedMessage}`;
-    window.open(whatsappUrl, '_blank' );
+    window.open(whatsappUrl, '_blank'  );
   };
 
-  // Detectar evento de instalação de PWA
-  useEffect(() => {
-    const handleBeforeInstallPrompt = (e: Event) => {
-      e.preventDefault();
-      setDeferredPrompt(e as BeforeInstallPromptEvent);
-      setShowInstallButton(true);
-    };
-
-    const handleAppInstalled = () => {
-      setShowInstallButton(false);
-      setDeferredPrompt(null);
-    };
-
-    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
-    window.addEventListener('appinstalled', handleAppInstalled);
-
-    return () => {
-      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
-      window.removeEventListener('appinstalled', handleAppInstalled);
-    };
-  }, []);
+  // Função para imprimir PDF
+  const handlePrint = () => {
+    if (pesoTotal === null) {
+      alert('Por favor, calcule os valores primeiro antes de imprimir.');
+      return;
+    }
+    generateAndSharePDF({
+      tipoProduto, malha, fio, comp, perda, larg, gancho, acabamentoTipo, precoKg, qtd,
+      pesoFio, pesoM2, areaTotal, pesoTotal, precoM2, precoTotal
+    });
+  };
 
   // Função para instalar o app
   const handleInstallApp = async () => {
@@ -202,6 +197,20 @@ export default function Home() {
     setDeferredPrompt(null);
     setShowInstallButton(false);
   };
+
+  useEffect(() => {
+    const handler = (e: BeforeInstallPromptEvent) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+      setShowInstallButton(true);
+    };
+
+    window.addEventListener('beforeinstallprompt', handler as any);
+
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handler as any);
+    };
+  }, []);
 
   return (
     <div className="calculator-container">
@@ -219,7 +228,7 @@ export default function Home() {
               <button className="btn primary no-print" onClick={handleInstallApp} style={{ marginRight: '8px' }}>
                 Instalar App
               </button>
-             )}
+              )}
             <button className="btn ghost no-print" onClick={handleShareWhatsApp} style={{ marginRight: '8px' }}>Compartilhar WhatsApp</button>
             <button className="btn ghost no-print" onClick={handlePrint}>Imprimir PDF</button>
             <span className="badge no-print">v1.5.0 • Telaço</span>
@@ -241,7 +250,7 @@ export default function Home() {
             </div>
             <div className="bd">
               <div className="inputs">
-                <div className="control" style={{ gridColumn: 'span 8' }}>
+                <div className="control" style={{ gridColumn: 'span 12' }}>
                   <label>Tipo de Produto *</label>
                   <Select value={tipoProduto} onValueChange={setTipoProduto}>
                     <SelectTrigger className="w-full" style={{
@@ -325,37 +334,16 @@ export default function Home() {
                     onChange={(e) => setGancho(e.target.value)}
                   />
                 </div>
-
-                {/* Parâmetros bloqueados (listas suspensas) */}
-                {showConstantes && (
-                  <div className="constantes-container">
-                    <div className="control">
-                      <label>Massa do material (g/cm³)</label>
-                      <select disabled>
-                        <option value="6.165">6,165 g/cm³</option>
-                      </select>
-                    </div>
-                    <div className="control">
-                      <label>Constante 1</label>
-                      <select disabled>
-                        <option value="1.1">1,10</option>
-                      </select>
-                    </div>
-                    <div className="control">
-                      <label>Constante 2</label>
-                      <select disabled>
-                        <option value="2">2</option>
-                      </select>
-                    </div>
-                    <div className="control">
-                      <label>Constante 3</label>
-                      <select disabled>
-                        <option value="1000">1000</option>
-                      </select>
-                    </div>
-                  </div>
-                )}
-
+                <div className="control">
+                  <label>Acabamento/Tipo (Opcional)</label>
+                  <input
+                    type="text"
+                    placeholder="Ex: SEM GANCHO - OND VB"
+                    value={acabamentoTipo}
+                    onChange={(e) => setAcabamentoTipo(e.target.value.toUpperCase())}
+                    style={{ textTransform: 'uppercase' }}
+                  />
+                </div>
                 <div className="control">
                   <label>Preço do Kg (R$)</label>
                   <input
@@ -371,15 +359,15 @@ export default function Home() {
                   <input
                     type="number"
                     step="1"
-                    placeholder="1"
+                    placeholder="ex.: 1"
                     value={qtd}
                     onChange={(e) => setQtd(e.target.value)}
                   />
                 </div>
               </div>
               <div className="actions">
-                <button className="btn primary no-print" onClick={calc}>Calcular</button>
-                <button className="btn ghost no-print" onClick={reset}>Limpar</button>
+                <button className="btn primary" onClick={calc}>Calcular</button>
+                <button className="btn ghost" onClick={reset}>Limpar</button>
               </div>
             </div>
           </div>
@@ -390,44 +378,65 @@ export default function Home() {
             </div>
             <div className="bd">
               <div className="results">
-                <div className="kpi">
-                  <h4>Peso do Fio (kg/m)</h4>
-                  <div className="val">{pesoFio !== null ? formatNumber(pesoFio) : '—'}</div>
+                <div className="result-box">
+                  <div className="label">PESO DO FIO (KG/M)</div>
+                  <div className="value">{pesoFio !== null ? formatNumber(pesoFio) : '-'}</div>
                 </div>
-                <div className="kpi">
-                  <h4>Peso da Tela (kg/m²)</h4>
-                  <div className="val">{pesoM2 !== null ? formatNumber(pesoM2) : '—'}</div>
+                <div className="result-box">
+                  <div className="label">PESO DA TELA (KG/M²)</div>
+                  <div className="value">{pesoM2 !== null ? formatNumber(pesoM2) : '-'}</div>
                 </div>
-                <div className="kpi">
-                  <h4>Área total (m²)</h4>
-                  <div className="val">{areaTotal !== null ? formatNumber(areaTotal) : '—'}</div>
-                  <div className="sub"></div>
+                <div className="result-box">
+                  <div className="label">ÁREA TOTAL (M²)</div>
+                  <div className="value">{areaTotal !== null ? formatNumber(areaTotal) : '-'}</div>
                 </div>
-              </div>
-              <div className="results" style={{ marginTop: '12px' }}>
-                <div className="kpi">
-                  <h4>Peso Total (kg)</h4>
-                  <div className="val">{pesoTotal !== null ? formatNumber(pesoTotal) : '—'}</div>
+                <div className="result-box">
+                  <div className="label">PESO TOTAL (KG)</div>
+                  <div className="value">{pesoTotal !== null ? formatNumber(pesoTotal) : '-'}</div>
                 </div>
-                <div className="kpi">
-                  <h4>Preço m² (R$)</h4>
-                  <div className="val">{precoM2 !== null ? formatCurrency(precoM2) : '—'}</div>
+                <div className="result-box">
+                  <div className="label">PREÇO M² (R$)</div>
+                  <div className="value">{precoM2 !== null ? formatCurrency(precoM2) : '-'}</div>
                 </div>
-                <div className="kpi">
-                  <h4>Preço Total (R$)</h4>
-                  <div className="val">{precoTotal !== null ? formatCurrency(precoTotal) : '—'}</div>
+                <div className="result-box">
+                  <div className="label">PREÇO TOTAL (R$)</div>
+                  <div className="value">{precoTotal !== null ? formatCurrency(precoTotal) : '-'}</div>
                 </div>
               </div>
             </div>
           </div>
-        </section>
 
-        <footer>
-          <div>© Telaço – Ferramenta interna.</div>
-          <div></div>
-        </footer>
+          {showConstantes && (
+            <div className="card" style={{ gridColumn: 'span 12' }}>
+              <div className="hd">
+                <h3>Constantes Utilizadas</h3>
+              </div>
+              <div className="bd">
+                <div className="results">
+                  <div className="result-box">
+                    <div className="label">MASSA</div>
+                    <div className="value">{massa}</div>
+                  </div>
+                  <div className="result-box">
+                    <div className="label">C1</div>
+                    <div className="value">{c1}</div>
+                  </div>
+                  <div className="result-box">
+                    <div className="label">C2</div>
+                    <div className="value">{c2}</div>
+                  </div>
+                  <div className="result-box">
+                    <div className="label">C3</div>
+                    <div className="value">{c3}</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+        </section>
       </div>
     </div>
   );
 }
+
 
