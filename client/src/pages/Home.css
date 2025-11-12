@@ -530,3 +530,23 @@ footer {
     color: #666;
   }
 }
+/* Radix Select – estiliza estado de foco/selecionado */
+.radix-select-item[data-highlighted] {
+  background: rgba(255, 255, 255, 0.08) !important;
+  color: #fff !important;
+}
+
+.radix-select-item[data-state="checked"] {
+  background: rgba(240, 100, 0, 0.14) !important; /* seu laranja suave */
+  color: #fff !important;
+}
+
+/* Garante tema escuro no content (caso algum CSS externo injete branco) */
+[data-radix-popper-content-wrapper] > div {
+  background: #1a1a1a !important;
+  color: #fff !important;
+  border: 1px solid rgba(255, 255, 255, 0.14) !important;
+  border-radius: 12px !important;
+  box-shadow: var(--shadow) !important;
+}
+
