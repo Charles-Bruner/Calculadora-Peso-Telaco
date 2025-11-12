@@ -182,18 +182,6 @@ export default function Home() {
     const whatsappUrl = `https://wa.me/?text=${encodedMessage}`;
     window.open(whatsappUrl, '_blank' );
   };
-
-  // Função para imprimir PDF
-  const handlePrint = () => {
-    if (pesoTotal === null) {
-      alert('Por favor, calcule os valores primeiro antes de imprimir.');
-      return;
-    }
-    generateAndSharePDF({
-      tipoProduto, malha, fio, comp, perda, larg, gancho, acabamentoTipo, precoKg, qtd,
-      pesoFio, pesoM2, areaTotal, pesoTotal, precoM2, precoTotal
-    });
-  };
   
   // Detectar evento de instalação de PWA
   useEffect(() => {
