@@ -33,6 +33,7 @@ export default function Home() {
 
   // Estados para os campos de entrada
   const [tipoProduto, setTipoProduto] = useState('');
+  const [acabamentoTipo, setAcabamentoTipo] = useState('');
   const [malha, setMalha] = useState('');
   const [fio, setFio] = useState('');
   const [comp, setComp] = useState('');
@@ -130,6 +131,7 @@ export default function Home() {
   // Funcao para limpar
   const reset = () => {
     setTipoProduto('');
+    setAcabamentoTipo('');
     setMalha('');
     setFio('');
     setComp('');
@@ -163,13 +165,36 @@ export default function Home() {
     const compFormatado = parseInt(comp);
     const largFormatado = parseInt(larg);
     
+    // Usar formatNumber para garantir a formatação correta do peso total (com 2 casas decimais)
+    const pesoTotalFormatado = formatNumber(pesoTotal, 2);
+    
     const mensagem = `${tipoProduto} - AB ${malhaFormatada} MM - FIO ${fioFormatado} MM - ${compFormatado} X ${largFormatado} MM`;
+
+    // Adicionar Acabamento/Tipo se preenchido
+    if (acabamentoTipo.trim() !== '') {
+      mensagem += ` - ${acabamentoTipo.trim()}`;
+    }
+
+    // Adicionar Peso Bruto na próxima linha
+    mensagem += `\n\nPeso Bruto: ${pesoTotalFormatado} Kg`;
     
     const encodedMessage = encodeURIComponent(mensagem);
     const whatsappUrl = `https://wa.me/?text=${encodedMessage}`;
     window.open(whatsappUrl, '_blank' );
   };
 
+  // Função para imprimir PDF
+  const handlePrint = () => {
+    if (pesoTotal === null) {
+      alert('Por favor, calcule os valores primeiro antes de imprimir.');
+      return;
+    }
+    generateAndSharePDF({
+      tipoProduto, malha, fio, comp, perda, larg, gancho, acabamentoTipo, precoKg, qtd,
+      pesoFio, pesoM2, areaTotal, pesoTotal, precoM2, precoTotal
+    });
+  };
+  
   // Detectar evento de instalação de PWA
   useEffect(() => {
     const handleBeforeInstallPrompt = (e: Event) => {
@@ -325,6 +350,16 @@ export default function Home() {
                     onChange={(e) => setGancho(e.target.value)}
                   />
                 </div>
+                <div className="control">
+                  <label>Acabamento/Tipo (Opcional)</label>
+                  <input
+                    type="text"
+                    placeholder="Ex: SEM GANCHO - OND VB"
+                    value={acabamentoTipo}
+                    onChange={(e) => setAcabamentoTipo(e.target.value.toUpperCase())}
+                    style={{ textTransform: 'uppercase' }}
+                  />
+                </div>
 
                 {/* Parâmetros bloqueados (listas suspensas) */}
                 {showConstantes && (
@@ -430,5 +465,3 @@ export default function Home() {
     </div>
   );
 }
-
-
