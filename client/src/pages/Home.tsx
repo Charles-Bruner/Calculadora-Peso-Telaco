@@ -250,7 +250,7 @@ export default function Home() {
             </div>
             <div className="bd">
               <div className="inputs">
-                <div className="control" style={{ gridColumn: 'span 12' }}>
+                <div className="control" style={{ gridColumn: 'span 6' }}>
                   <label>Tipo de Produto *</label>
                   <Select value={tipoProduto} onValueChange={setTipoProduto}>
                     <SelectTrigger className="w-full" style={{
@@ -334,7 +334,7 @@ export default function Home() {
                     onChange={(e) => setGancho(e.target.value)}
                   />
                 </div>
-                <div className="control">
+                <div className="control" style={{ gridColumn: 'span 6' }}>
                   <label>Acabamento/Tipo (Opcional)</label>
                   <input
                     type="text"
@@ -438,5 +438,6 @@ export default function Home() {
     </div>
   );
 }
+
 
 
