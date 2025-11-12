@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '../components/ui/select';
 import './Home.css';
-import { generateAndSharePDF } from '../utils/pdfGenerator';
+// Se não estiver usando geração de PDF via util, pode remover a importação abaixo.
+// import { generateAndSharePDF } from '../utils/pdfGenerator';
 
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>;
@@ -28,7 +29,7 @@ export default function Home() {
     'TELA PV ATC 1065 HARPA III',
     'TELA PV GALVANIZADO',
     'TELA PV INOX AISI 304',
-    'TELA PV INOX AISI 316'
+    'TELA PV INOX AISI 316',
   ];
 
   // Estados para os campos de entrada
@@ -60,38 +61,35 @@ export default function Home() {
   const c2 = 2;
   const c3 = 1000;
 
-  // Função para converter string em número
+  // Converte string em número (virgula -> ponto)
   const val = (value: string): number => {
     const v = (value ?? '').toString().replace(',', '.');
     const num = parseFloat(v);
     return isNaN(num) ? 0 : num;
   };
 
-  // Funcao para validar campos obrigatorios
+  // Validação de obrigatórios
   const validateInputs = (): boolean => {
-    if (!tipoProduto) {
-      return false;
-    }
+    if (!tipoProduto) return false;
     const requiredFields = [malha, fio, comp, perda, larg];
-    return requiredFields.every(field => val(field) > 0);
+    return requiredFields.every((field) => val(field) > 0);
   };
 
-  // Função para formatar números em pt-BR
-  const formatNumber = (num: number, decimals: number = 3): string => {
-    return new Intl.NumberFormat('pt-BR', { minimumFractionDigits: decimals, maximumFractionDigits: decimals }).format(num);
-  };
+  // Formatadores
+  const formatNumber = (num: number, decimals: number = 3): string =>
+    new Intl.NumberFormat('pt-BR', { minimumFractionDigits: decimals, maximumFractionDigits: decimals }).format(num);
 
-  // Função para formatar moeda em pt-BR
-  const formatCurrency = (num: number): string => {
-    return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(num);
-  };
+  const formatCurrency = (num: number): string =>
+    new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(num);
 
-  // Funcao para calcular
+  // Cálculo
   const calc = () => {
-      if (!validateInputs()) {
-        alert('Por favor, selecione um Tipo de Produto e preencha os campos obrigatorios (Malha, Fio, Comprimento, Perda, Largura) com valores maiores que zero.');
-        return;
-      }
+    if (!validateInputs()) {
+      alert(
+        'Por favor, selecione um Tipo de Produto e preencha os campos obrigatórios (Malha, Fio, Comprimento, Perda, Largura) com valores maiores que zero.'
+      );
+      return;
+    }
 
     const malhaNum = val(malha);
     const fioNum = val(fio);
@@ -102,22 +100,22 @@ export default function Home() {
     const precoKgNum = val(precoKg);
     const qtdNum = Math.max(1, val(qtd)) || 1;
 
-    // Fórmula 1: Peso do Fio (kg/m)
+    // 1) Peso do Fio (kg/m)
     const pesoFioCalc = ((fioNum * fioNum) * massa) / c3;
 
-    // Fórmula 2: Peso da Tela (kg/m²)
+    // 2) Peso da Tela (kg/m²)
     const pesoM2Calc = (c3 / (fioNum + malhaNum)) * c2 * c1 * pesoFioCalc;
 
-    // Fórmula 3: Área (m²)
+    // 3) Área (m²)
     const areaTotalCalc = Math.max(0, ((largNum + ganhoNum) / c3) * ((compNum + perdaNum) / c3));
 
-    // Fórmula 4: Peso Total (kg)
+    // 4) Peso Total (kg)
     const pesoTotalCalc = pesoM2Calc * areaTotalCalc * qtdNum;
 
-    // Fórmula 5: Preço m² (R$)
+    // 5) Preço m² (R$)
     const precoM2Calc = pesoM2Calc * precoKgNum;
 
-    // Fórmula 6: Preço Total (R$)
+    // 6) Preço Total (R$)
     const precoTotalCalc = pesoTotalCalc * precoKgNum;
 
     setPesoFio(pesoFioCalc);
@@ -128,7 +126,7 @@ export default function Home() {
     setPrecoTotal(precoTotalCalc);
   };
 
-  // Funcao para limpar
+  // Limpar
   const reset = () => {
     setTipoProduto('');
     setAcabamentoTipo('');
@@ -148,14 +146,21 @@ export default function Home() {
     setPrecoTotal(null);
   };
 
-  // Funcao para imprimir
+  // Imprimir
   const handlePrint = () => {
     window.print();
   };
 
-  // Funcao para compartilhar via WhatsApp com formato especifico
+  // Compartilhar WhatsApp
   const handleShareWhatsApp = async () => {
-    if (pesoFio === null || pesoM2 === null || areaTotal === null || pesoTotal === null || precoM2 === null || precoTotal === null) {
+    if (
+      pesoFio === null ||
+      pesoM2 === null ||
+      areaTotal === null ||
+      pesoTotal === null ||
+      precoM2 === null ||
+      precoTotal === null
+    ) {
       alert('Por favor, calcule os valores primeiro antes de compartilhar.');
       return;
     }
@@ -164,26 +169,23 @@ export default function Home() {
     const fioFormatado = parseFloat(fio).toFixed(2).replace('.', ',');
     const compFormatado = parseInt(comp);
     const largFormatado = parseInt(larg);
-    
-    // Usar formatNumber para garantir a formatação correta do peso total (com 2 casas decimais)
+
     const pesoTotalFormatado = formatNumber(pesoTotal, 2);
-    
+
     let mensagem = `${tipoProduto} - AB ${malhaFormatada} MM - FIO ${fioFormatado} MM - ${compFormatado} X ${largFormatado} MM`;
 
-    // Adicionar Acabamento/Tipo se preenchido
     if (acabamentoTipo.trim() !== '') {
       mensagem += ` - ${acabamentoTipo.trim()}`;
     }
 
-    // Adicionar Peso Bruto na próxima linha
     mensagem += `\n\nPeso Bruto: ${pesoTotalFormatado} Kg`;
-    
+
     const encodedMessage = encodeURIComponent(mensagem);
     const whatsappUrl = `https://wa.me/?text=${encodedMessage}`;
-    window.open(whatsappUrl, '_blank' );
+    window.open(whatsappUrl, '_blank');
   };
-  
-  // Detectar evento de instalação de PWA
+
+  // PWA
   useEffect(() => {
     const handleBeforeInstallPrompt = (e: Event) => {
       e.preventDefault();
@@ -205,10 +207,8 @@ export default function Home() {
     };
   }, []);
 
-  // Função para instalar o app
   const handleInstallApp = async () => {
     if (!deferredPrompt) return;
-
     deferredPrompt.prompt();
     const { outcome } = await deferredPrompt.userChoice;
     console.log(`User response to the install prompt: ${outcome}`);
@@ -221,25 +221,44 @@ export default function Home() {
       <div className="wrap">
         <header>
           <div className="brand">
-            <img src="https://i.postimg.cc/gctNgQm4/logo-Telaco-Laranja-horizontal.png" alt="Telaço" />
+            <img
+              src="https://i.postimg.cc/gctNgQm4/logo-Telaco-Laranja-horizontal.png"
+              alt="Telaço"
+            />
             <div>
               <h1>Calculadora de Peso de Tela</h1>
-              <div className="hint">Tela para peneiramento industrial — modelo de cálculo com constantes configuráveis</div>
+              <div className="hint">
+                Tela para peneiramento industrial — modelo de cálculo com constantes configuráveis
+              </div>
             </div>
           </div>
+
           <div className="header-actions">
             {showInstallButton && (
-              <button className="btn primary no-print" onClick={handleInstallApp} style={{ marginRight: '8px' }}>
+              <button
+                className="btn primary no-print"
+                onClick={handleInstallApp}
+                style={{ marginRight: '8px' }}
+              >
                 Instalar App
               </button>
-             )}
-            <button className="btn ghost no-print" onClick={handleShareWhatsApp} style={{ marginRight: '8px' }}>Compartilhar WhatsApp</button>
-            <button className="btn ghost no-print" onClick={handlePrint}>Imprimir PDF</button>
+            )}
+            <button
+              className="btn ghost no-print"
+              onClick={handleShareWhatsApp}
+              style={{ marginRight: '8px' }}
+            >
+              Compartilhar WhatsApp
+            </button>
+            <button className="btn ghost no-print" onClick={handlePrint}>
+              Imprimir PDF
+            </button>
             <span className="badge no-print">v1.5.0 • Telaço</span>
           </div>
         </header>
 
         <section className="grid">
+          {/* CARD ENTRADAS */}
           <div className="card" style={{ gridColumn: 'span 12' }}>
             <div className="hd">
               <h3>Entradas</h3>
@@ -248,25 +267,30 @@ export default function Home() {
                   type="checkbox"
                   checked={showConstantes}
                   onChange={(e) => setShowConstantes(e.target.checked)}
-                />
-                {' '}Exibir Constantes
+                />{' '}
+                Exibir Constantes
               </label>
             </div>
+
             <div className="bd">
               <div className="inputs">
+                {/* Linha exclusiva – Tipo de Produto */}
                 <div className="control" style={{ gridColumn: 'span 8' }}>
                   <label>Tipo de Produto *</label>
                   <Select value={tipoProduto} onValueChange={setTipoProduto}>
-                    <SelectTrigger className="w-full" style={{
-                      width: '100%',
-                      padding: '10px',
-                      borderRadius: '8px',
-                      border: '1px solid #333',
-                      backgroundColor: '#1a1a1a',
-                      color: '#fff',
-                      fontSize: '14px',
-                      cursor: 'pointer'
-                    }}>
+                    <SelectTrigger
+                      className="w-full"
+                      style={{
+                        width: '100%',
+                        padding: '10px',
+                        borderRadius: '8px',
+                        border: '1px solid #333',
+                        backgroundColor: '#1a1a1a',
+                        color: '#fff',
+                        fontSize: '14px',
+                        cursor: 'pointer',
+                      }}
+                    >
                       <SelectValue placeholder="-- Selecione um tipo de produto --" />
                     </SelectTrigger>
                     <SelectContent>
@@ -278,27 +302,29 @@ export default function Home() {
                     </SelectContent>
                   </Select>
                 </div>
+
                 {/* Linha exclusiva – Acabamento/Tipo */}
-    <div className="control" style={{ gridColumn: 'span 8' }}>
-      <label>Acabamento/Tipo (Opcional)</label>
-      <input
-        type="text"
-        placeholder="Ex: SEM GANCHO - OND VB"
-        value={acabamentoTipo}
-        onChange={(e) => setAcabamentoTipo(e.target.value.toUpperCase())}
-        style={{
-          textTransform: 'uppercase',
-          width: '100%',
-          padding: '10px',
-          borderRadius: '8px',
-          border: '1px solid #333',
-          backgroundColor: '#1a1a1a',
-          color: '#fff',
-          fontSize: '14px',
-        }}
-      />
-    </div>
+                <div className="control" style={{ gridColumn: 'span 8' }}>
+                  <label>Acabamento/Tipo (Opcional)</label>
+                  <input
+                    type="text"
+                    placeholder="Ex: SEM GANCHO - OND VB"
+                    value={acabamentoTipo}
+                    onChange={(e) => setAcabamentoTipo(e.target.value.toUpperCase())}
+                    style={{
+                      textTransform: 'uppercase',
+                      width: '100%',
+                      padding: '10px',
+                      borderRadius: '8px',
+                      border: '1px solid #333',
+                      backgroundColor: '#1a1a1a',
+                      color: '#fff',
+                      fontSize: '14px',
+                    }}
+                  />
                 </div>
+
+                {/* Demais campos (mesma linha/grid padrão) */}
                 <div className="control">
                   <label>Malha (mm)</label>
                   <input
@@ -309,6 +335,7 @@ export default function Home() {
                     onChange={(e) => setMalha(e.target.value)}
                   />
                 </div>
+
                 <div className="control">
                   <label>Fio (mm)</label>
                   <input
@@ -319,6 +346,7 @@ export default function Home() {
                     onChange={(e) => setFio(e.target.value)}
                   />
                 </div>
+
                 <div className="control">
                   <label>Comprimento (mm)</label>
                   <input
@@ -329,6 +357,7 @@ export default function Home() {
                     onChange={(e) => setComp(e.target.value)}
                   />
                 </div>
+
                 <div className="control">
                   <label>Perda (mm)</label>
                   <input
@@ -339,6 +368,7 @@ export default function Home() {
                     onChange={(e) => setPerda(e.target.value)}
                   />
                 </div>
+
                 <div className="control">
                   <label>Largura (mm)</label>
                   <input
@@ -349,6 +379,7 @@ export default function Home() {
                     onChange={(e) => setLarg(e.target.value)}
                   />
                 </div>
+
                 <div className="control">
                   <label>Gancho (mm)</label>
                   <input
@@ -359,7 +390,7 @@ export default function Home() {
                     onChange={(e) => setGancho(e.target.value)}
                   />
                 </div>
-                
+
                 {/* Parâmetros bloqueados (listas suspensas) */}
                 {showConstantes && (
                   <div className="constantes-container">
@@ -400,6 +431,7 @@ export default function Home() {
                     onChange={(e) => setPrecoKg(e.target.value)}
                   />
                 </div>
+
                 <div className="control">
                   <label>Quantidade</label>
                   <input
@@ -411,13 +443,19 @@ export default function Home() {
                   />
                 </div>
               </div>
+
               <div className="actions">
-                <button className="btn primary no-print" onClick={calc}>Calcular</button>
-                <button className="btn ghost no-print" onClick={reset}>Limpar</button>
+                <button className="btn primary no-print" onClick={calc}>
+                  Calcular
+                </button>
+                <button className="btn ghost no-print" onClick={reset}>
+                  Limpar
+                </button>
               </div>
             </div>
           </div>
 
+          {/* CARD RESULTADOS */}
           <div className="card" style={{ gridColumn: 'span 12' }}>
             <div className="hd">
               <h3>Resultados</h3>
@@ -438,6 +476,7 @@ export default function Home() {
                   <div className="sub"></div>
                 </div>
               </div>
+
               <div className="results" style={{ marginTop: '12px' }}>
                 <div className="kpi">
                   <h4>Peso Total (kg)</h4>
@@ -464,3 +503,4 @@ export default function Home() {
     </div>
   );
 }
+
