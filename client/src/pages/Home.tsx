@@ -278,15 +278,26 @@ export default function Home() {
                     </SelectContent>
                   </Select>
                 </div>
-                <div className="control">
-                  <label>Acabamento/Tipo (Opcional)</label>
-                  <input
-                    type="text"
-                    placeholder="Ex: SEM GANCHO - OND VB"
-                    value={acabamentoTipo}
-                    onChange={(e) => setAcabamentoTipo(e.target.value.toUpperCase())}
-                    style={{ textTransform: 'uppercase' }}
-                  />
+                {/* Linha exclusiva – Acabamento/Tipo */}
+    <div className="control" style={{ gridColumn: 'span 8' }}>
+      <label>Acabamento/Tipo (Opcional)</label>
+      <input
+        type="text"
+        placeholder="Ex: SEM GANCHO - OND VB"
+        value={acabamentoTipo}
+        onChange={(e) => setAcabamentoTipo(e.target.value.toUpperCase())}
+        style={{
+          textTransform: 'uppercase',
+          width: '100%',
+          padding: '10px',
+          borderRadius: '8px',
+          border: '1px solid #333',
+          backgroundColor: '#1a1a1a',
+          color: '#fff',
+          fontSize: '14px',
+        }}
+      />
+    </div>
                 </div>
                 <div className="control">
                   <label>Malha (mm)</label>
