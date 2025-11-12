@@ -278,31 +278,60 @@ export default function Home() {
                 <div className="control" style={{ gridColumn: 'span 8' }}>
                   <label>Tipo de Produto *</label>
                   <Select value={tipoProduto} onValueChange={setTipoProduto}>
-                    <SelectTrigger
-                      className="w-full"
-                      style={{
-                        width: '100%',
-                        padding: '10px',
-                        borderRadius: '8px',
-                        border: '1px solid #333',
-                        backgroundColor: '#1a1a1a',
-                        color: '#fff',
-                        fontSize: '14px',
-                        cursor: 'pointer',
-                      }}
-                    >
-                      <SelectValue placeholder="-- Selecione um tipo de produto --" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {PRODUCT_TYPES.map((type) => (
-                        <SelectItem key={type} value={type}>
-                          {type}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
+  <SelectTrigger
+    className="w-full"
+    style={{
+      width: '100%',
+      padding: '10px',
+      borderRadius: '8px',
+      border: '1px solid #333',
+      backgroundColor: '#1a1a1a',
+      color: '#fff',
+      fontSize: '14px',
+      cursor: 'pointer',
+    }}
+  >
+    <SelectValue placeholder="-- Selecione um tipo de produto --" />
+  </SelectTrigger>
 
+  {/* FORÇA TEMA ESCURO AQUI */}
+  <SelectContent
+    position="popper"
+    sideOffset={6}
+    style={{
+      backgroundColor: '#1a1a1a',
+      color: '#fff',
+      border: '1px solid rgba(255,255,255,0.14)',
+      borderRadius: 12,
+      boxShadow: 'var(--shadow)',
+      padding: '6px 0',
+      overflow: 'hidden',
+      zIndex: 9999,
+    }}
+  >
+    <div style={{ maxHeight: 320, overflowY: 'auto' }}>
+      {PRODUCT_TYPES.map((type) => (
+        <SelectItem
+          key={type}
+          value={type}
+          /* estilo do item (normal) */
+          style={{
+            padding: '10px 12px',
+            background: 'transparent',
+            color: '#fff',
+            cursor: 'pointer',
+          }}
+          /* Radix usa data-attributes: destacamos com CSS inline via function prop */
+          // @ts-ignore – caso o tipo não aceite 'className' em sua tipagem
+          className="radix-select-item"
+        >
+          {type}
+        </SelectItem>
+      ))}
+    </div>
+  </SelectContent>
+</Select>
+                </div>
                 {/* Linha exclusiva – Acabamento/Tipo */}
                 <div className="control" style={{ gridColumn: 'span 8' }}>
                   <label>Acabamento/Tipo (Opcional)</label>
