@@ -41,12 +41,35 @@ export default function Home() {
     'TELA PV INOX AISI 316',
   ];
 
+  const ACABAMENTOS = [
+    'GS',
+    'GC',
+    'GS I',
+    'GC I',
+    'GC U',
+    'GU',
+    'SEM GANCHO',
+    'ESPECIAL',
+  ];
+
+  const TIPOS = [
+    'OND VB',
+    'OND DX',
+    'OND WR',
+    'AUTOLIMPANTE VENO',
+    'AUTOLIMPANTE SERPA',
+    'HARPA III',
+    'MODULAR',
+    'NÃO SE APLICA',
+  ];
+
   const BUILD_HASH = __GIT_COMMIT__ || 'dev';
   const INSTALL_KEY = `telaco_calc_installed_${BUILD_HASH}`;
 
   // Entradas
   const [tipoProduto, setTipoProduto] = useState('');
-  const [acabamentoTipo, setAcabamentoTipo] = useState('');
+  const [acabamento, setAcabamento] = useState('');
+  const [tipoAcabamento, setTipoAcabamento] = useState('');
   const [malha, setMalha] = useState('');
   const [fio, setFio] = useState('');
   const [comp, setComp] = useState('');
@@ -153,11 +176,12 @@ export default function Home() {
   // Limpar tudo
   const reset = () => {
     setTipoProduto('');
-    setAcabamentoTipo('');
+    setAcabamento('');
+    setTipoAcabamento('');
     setMalha('');
     setFio('');
     setComp('');
-    setPerda('');
+    setPerda('100');
     setLarg('');
     setGancho('');
     setPrecoKg('');
@@ -189,16 +213,32 @@ export default function Home() {
       return;
     }
 
-    const malhaFormatada = parseFloat(malha).toFixed(2).replace('.', ',');
-    const fioFormatado = parseFloat(fio).toFixed(2).replace('.', ',');
-    const compFormatado = parseInt(comp);
-    const largFormatado = parseInt(larg);
+    const malhaNum = val(malha);
+    const fioNum = val(fio);
+    const compNum = val(comp);
+    const largNum = val(larg);
     const pesoTotalFormatado = formatNumber(pesoTotal, 2);
+
+    const malhaFormatada = malhaNum.toFixed(2).replace('.', ',');
+    const fioFormatado = fioNum.toFixed(2).replace('.', ',');
+    const compFormatado = Math.round(compNum);
+    const largFormatado = Math.round(largNum);
 
     let mensagem = `${tipoProduto} - AB ${malhaFormatada} MM - FIO ${fioFormatado} MM - ${compFormatado} X ${largFormatado} MM`;
 
-    if (acabamentoTipo.trim() !== '') {
-      mensagem += ` - ${acabamentoTipo.trim()}`;
+    // Monta "Acabamento - Tipo" se houver
+    let detalhes = '';
+
+    if (acabamento) {
+      detalhes += acabamento;
+    }
+
+    if (tipoAcabamento && tipoAcabamento !== 'NÃO SE APLICA') {
+      detalhes += (detalhes ? ' - ' : '') + tipoAcabamento;
+    }
+
+    if (detalhes) {
+      mensagem += ` - ${detalhes}`;
     }
 
     mensagem += `\n\nPeso Bruto: ${pesoTotalFormatado} Kg`;
@@ -444,27 +484,119 @@ export default function Home() {
                   </Select>
                 </div>
 
-                {/* Linha exclusiva – Acabamento/Tipo */}
-                <div className="control" style={{ gridColumn: 'span 8' }}>
-                  <label>Acabamento/Tipo (Opcional)</label>
-                  <input
-                    type="text"
-                    placeholder="Ex: SEM GANCHO - OND VB"
-                    value={acabamentoTipo}
-                    onChange={(e) =>
-                      setAcabamentoTipo(e.target.value.toUpperCase())
-                    }
-                    style={{
-                      textTransform: 'uppercase',
-                      width: '100%',
-                      padding: '10px',
-                      borderRadius: '8px',
-                      border: '1px solid #333',
-                      backgroundColor: '#1a1a1a',
-                      color: '#fff',
-                      fontSize: '14px',
-                    }}
-                  />
+                {/* Linha – Acabamento */}
+                <div className="control" style={{ gridColumn: 'span 4' }}>
+                  <label>Acabamento (Opcional)</label>
+                  <Select value={acabamento} onValueChange={setAcabamento}>
+                    <SelectTrigger
+                      className="w-full"
+                      style={{
+                        width: '100%',
+                        padding: '10px',
+                        borderRadius: '8px',
+                        border: '1px solid #333',
+                        backgroundColor: '#1a1a1a',
+                        color: '#fff',
+                        fontSize: '14px',
+                        cursor: 'pointer',
+                      }}
+                    >
+                      <SelectValue placeholder="Selecione o acabamento" />
+                    </SelectTrigger>
+
+                    <SelectContent
+                      position="popper"
+                      sideOffset={6}
+                      style={{
+                        backgroundColor: '#1a1a1a',
+                        color: '#fff',
+                        border: '1px solid rgba(255,255,255,0.14)',
+                        borderRadius: 12,
+                        boxShadow: 'var(--shadow)',
+                        padding: '6px 0',
+                        overflow: 'hidden',
+                        zIndex: 9999,
+                      }}
+                    >
+                      <div style={{ maxHeight: 320, overflowY: 'auto' }}>
+                        {ACABAMENTOS.map((opt) => (
+                          <SelectItem
+                            key={opt}
+                            value={opt}
+                            // @ts-ignore
+                            className="radix-select-item"
+                            style={{
+                              padding: '10px 12px',
+                              background: 'transparent',
+                              color: '#fff',
+                              cursor: 'pointer',
+                            }}
+                          >
+                            {opt}
+                          </SelectItem>
+                        ))}
+                      </div>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Linha – Tipo */}
+                <div className="control" style={{ gridColumn: 'span 4' }}>
+                  <label>Tipo (Opcional)</label>
+                  <Select
+                    value={tipoAcabamento}
+                    onValueChange={setTipoAcabamento}
+                  >
+                    <SelectTrigger
+                      className="w-full"
+                      style={{
+                        width: '100%',
+                        padding: '10px',
+                        borderRadius: '8px',
+                        border: '1px solid #333',
+                        backgroundColor: '#1a1a1a',
+                        color: '#fff',
+                        fontSize: '14px',
+                        cursor: 'pointer',
+                      }}
+                    >
+                      <SelectValue placeholder="Selecione o tipo" />
+                    </SelectTrigger>
+
+                    <SelectContent
+                      position="popper"
+                      sideOffset={6}
+                      style={{
+                        backgroundColor: '#1a1a1a',
+                        color: '#fff',
+                        border: '1px solid rgba(255,255,255,0.14)',
+                        borderRadius: 12,
+                        boxShadow: 'var(--shadow)',
+                        padding: '6px 0',
+                        overflow: 'hidden',
+                        zIndex: 9999,
+                      }}
+                    >
+                      <div style={{ maxHeight: 320, overflowY: 'auto' }}>
+                        {TIPOS.map((opt) => (
+                          <SelectItem
+                            key={opt}
+                            value={opt}
+                            // @ts-ignore
+                            className="radix-select-item"
+                            style={{
+                              padding: '10px 12px',
+                              background: 'transparent',
+                              color: '#fff',
+                              cursor: 'pointer',
+                            }}
+                          >
+                            {opt}
+                          </SelectItem>
+                        ))}
+                      </div>
+                    </SelectContent>
+                  </Select>
                 </div>
 
                 {/* Demais campos */}
@@ -506,11 +638,11 @@ export default function Home() {
                   <input
                     type="number"
                     value={perda}
-                    readOnly                    
+                    readOnly
                     style={{
-                     backgroundColor: '#2a2a2a',
-                     color: '#aaa',
-                     cursor: 'not-allowed' 
+                      backgroundColor: '#2a2a2a',
+                      color: '#aaa',
+                      cursor: 'not-allowed',
                     }}
                   />
                 </div>
@@ -661,6 +793,7 @@ export default function Home() {
     </div>
   );
 }
+
 
 
 
