@@ -176,26 +176,39 @@ export default function Home() {
   };
 
   // PWA
+    // 🔄 Auto-update total quando a build mudar
   useEffect(() => {
-    const handleBeforeInstallPrompt = (e: Event) => {
-      e.preventDefault();
-      setDeferredPrompt(e as BeforeInstallPromptEvent);
-      setShowInstallButton(true);
-    };
+    const currentBuild = __GIT_COMMIT__ || '';
+    const STORAGE_KEY = 'telaco_calc_build_hash';
 
-    const handleAppInstalled = () => {
-      setShowInstallButton(false);
-      setDeferredPrompt(null);
-    };
+    try {
+      const savedBuild = localStorage.getItem(STORAGE_KEY);
 
-    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
-    window.addEventListener('appinstalled', handleAppInstalled);
+      // Se já existe uma build salva E ela mudou -> limpar caches + recarregar
+      if (savedBuild && savedBuild !== currentBuild) {
+        // Atualiza o hash salvo para evitar loop
+        localStorage.setItem(STORAGE_KEY, currentBuild);
 
-    return () => {
-      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
-      window.removeEventListener('appinstalled', handleAppInstalled);
-    };
+        if ('caches' in window) {
+          caches
+            .keys()
+            .then((keys) => Promise.all(keys.map((k) => caches.delete(k))))
+            .finally(() => {
+              window.location.reload();
+            });
+        } else {
+          window.location.reload();
+        }
+      } else if (!savedBuild && currentBuild) {
+        // Primeira vez: só salva o hash atual
+        localStorage.setItem(STORAGE_KEY, currentBuild);
+      }
+    } catch (err) {
+      // Se der qualquer erro com localStorage ou caches, não quebra o app
+      console.error('Falha ao verificar/atualizar build:', err);
+    }
   }, []);
+
 
   const handleInstallApp = async () => {
     if (!deferredPrompt) return;
