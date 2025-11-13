@@ -7,6 +7,7 @@ import {
   SelectItem,
 } from '../components/ui/select';
 import './Home.css';
+// import { generateAndSharePDF } from '../utils/pdfGenerator';
 
 // Injetadas pelo Vite (vite.config.ts -> define)
 declare const __GIT_COMMIT__: string;
@@ -40,6 +41,9 @@ export default function Home() {
     'TELA PV INOX AISI 316',
   ];
 
+  const BUILD_HASH = __GIT_COMMIT__ || 'dev';
+  const INSTALL_KEY = `telaco_calc_installed_${BUILD_HASH}`;
+
   // Entradas
   const [tipoProduto, setTipoProduto] = useState('');
   const [acabamentoTipo, setAcabamentoTipo] = useState('');
@@ -56,8 +60,7 @@ export default function Home() {
   // PWA
   const [deferredPrompt, setDeferredPrompt] =
     useState<BeforeInstallPromptEvent | null>(null);
-  // começa como true para o botão sempre aparecer (desktop / mobile)
-  const [showInstallButton, setShowInstallButton] = useState(true);
+  const [showInstallButton, setShowInstallButton] = useState(false);
 
   // Resultados
   const [pesoFio, setPesoFio] = useState<number | null>(null);
@@ -73,7 +76,7 @@ export default function Home() {
   const c2 = 2;
   const c3 = 1000;
 
-  // Converte string em número (virgula -> ponto)
+  // Converte string em número (vírgula -> ponto)
   const val = (value: string): number => {
     const v = (value ?? '').toString().replace(',', '.');
     const num = parseFloat(v);
@@ -167,7 +170,7 @@ export default function Home() {
     setPrecoTotal(null);
   };
 
-  // Imprimir PDF (A4 retrato via CSS @media print)
+  // Imprimir PDF
   const handlePrint = () => {
     window.print();
   };
@@ -205,15 +208,58 @@ export default function Home() {
     window.open(whatsappUrl, '_blank');
   };
 
+  // Detecta se está rodando em modo standalone (PWA)
+  const isStandaloneMode = () => {
+    const mql = window.matchMedia?.('(display-mode: standalone)');
+    const isStandaloneMedia = mql ? mql.matches : false;
+    const isIOSStandalone = (window.navigator as any).standalone === true;
+    return isStandaloneMedia || isIOSStandalone;
+  };
+
+  // PWA: controla visibilidade do botão de instalar por build
+  useEffect(() => {
+    try {
+      const alreadyInstalled = localStorage.getItem(INSTALL_KEY) === '1';
+
+      if (isStandaloneMode()) {
+        // Se já está aberto como PWA, marca como instalado e some
+        localStorage.setItem(INSTALL_KEY, '1');
+        setShowInstallButton(false);
+      } else if (!alreadyInstalled) {
+        // No navegador e ainda não instalou essa build → mostra botão
+        setShowInstallButton(true);
+      } else {
+        setShowInstallButton(false);
+      }
+    } catch (err) {
+      console.error('Erro ao checar instalação do PWA:', err);
+      // Se der problema com localStorage, não quebra; só esconde o botão
+      setShowInstallButton(false);
+    }
+  }, [INSTALL_KEY]);
+
   // PWA: captura beforeinstallprompt + appinstalled
   useEffect(() => {
     const handleBeforeInstallPrompt = (e: Event) => {
       e.preventDefault();
       setDeferredPrompt(e as BeforeInstallPromptEvent);
-      // botão já começa true, não precisamos mexer aqui
+      // Se ainda não marcamos como instalado, garante botão visível
+      try {
+        const alreadyInstalled = localStorage.getItem(INSTALL_KEY) === '1';
+        if (!alreadyInstalled && !isStandaloneMode()) {
+          setShowInstallButton(true);
+        }
+      } catch {
+        // ignora
+      }
     };
 
     const handleAppInstalled = () => {
+      try {
+        localStorage.setItem(INSTALL_KEY, '1');
+      } catch {
+        // ignora
+      }
       setShowInstallButton(false);
       setDeferredPrompt(null);
     };
@@ -228,7 +274,7 @@ export default function Home() {
       );
       window.removeEventListener('appinstalled', handleAppInstalled);
     };
-  }, []);
+  }, [INSTALL_KEY]);
 
   // Handler do botão "Instalar App"
   const handleInstallApp = async () => {
@@ -238,6 +284,11 @@ export default function Home() {
       console.log(`User response to the install prompt: ${outcome}`);
 
       if (outcome === 'accepted') {
+        try {
+          localStorage.setItem(INSTALL_KEY, '1');
+        } catch {
+          // ignora
+        }
         setShowInstallButton(false);
       }
 
@@ -245,7 +296,7 @@ export default function Home() {
       return;
     }
 
-    // Fallback: navegador não disparou o evento
+    // Fallback para navegadores sem beforeinstallprompt
     alert(
       'Para instalar o app:\n\n' +
         '• No computador (Chrome/Edge): clique no ícone de instalação ao lado da barra de endereço.\n' +
@@ -256,7 +307,7 @@ export default function Home() {
 
   // 🔄 Auto-update total quando a build mudar (web + PWA)
   useEffect(() => {
-    const currentBuild = __GIT_COMMIT__ || '';
+    const currentBuild = BUILD_HASH;
     const STORAGE_KEY = 'telaco_calc_build_hash';
 
     try {
@@ -281,7 +332,7 @@ export default function Home() {
     } catch (err) {
       console.error('Falha ao verificar/atualizar build:', err);
     }
-  }, []);
+  }, [BUILD_HASH]);
 
   return (
     <div className="calculator-container">
@@ -322,7 +373,7 @@ export default function Home() {
               Imprimir PDF
             </button>
             <span className="badge no-print">
-              {__GIT_COMMIT__ ? __GIT_COMMIT__.slice(0, 7) : 'build'}
+              {BUILD_HASH ? BUILD_HASH.slice(0, 7) : 'build'}
             </span>
           </div>
         </header>
@@ -598,9 +649,7 @@ export default function Home() {
                 <div className="kpi">
                   <h4>Preço Total (R$)</h4>
                   <div className="val">
-                    {precoTotal !== null
-                      ? formatCurrency(precoTotal)
-                      : '—'}
+                    {precoTotal !== null ? formatCurrency(precoTotal) : '—'}
                   </div>
                 </div>
               </div>
@@ -616,6 +665,7 @@ export default function Home() {
     </div>
   );
 }
+
 
 
 
