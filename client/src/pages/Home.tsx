@@ -50,7 +50,7 @@ export default function Home() {
   const [malha, setMalha] = useState('');
   const [fio, setFio] = useState('');
   const [comp, setComp] = useState('');
-  const [perda, setPerda] = useState('');
+  const [perda, setPerda] = useState('100');
   const [larg, setLarg] = useState('');
   const [gancho, setGancho] = useState('');
   const [precoKg, setPrecoKg] = useState('');
@@ -505,10 +505,13 @@ export default function Home() {
                   <label>Perda (mm)</label>
                   <input
                     type="number"
-                    step="1"
-                    placeholder="ex.: 100"
                     value={perda}
-                    onChange={(e) => setPerda(e.target.value)}
+                    readOnly                    
+                    style={{
+                     backgroundColor: '#2a2a2a',
+                     color: '#aaa',
+                     cursor: 'not-allowed' 
+                    }}
                   />
                 </div>
 
