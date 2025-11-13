@@ -1,10 +1,8 @@
 import { useState, useEffect } from 'react';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '../components/ui/select';
 import './Home.css';
-// Se não estiver usando geração de PDF via util, pode remover a importação abaixo.
-// import { generateAndSharePDF } from '../utils/pdfGenerator';
 
-// 👇 ADICIONE ESTAS DUAS LINHAS AQUI
+// Variáveis globais geradas automaticamente no build
 declare const __GIT_COMMIT__: string;
 declare const __BUILD_DATE__: string;
 
@@ -104,22 +102,11 @@ export default function Home() {
     const precoKgNum = val(precoKg);
     const qtdNum = Math.max(1, val(qtd)) || 1;
 
-    // 1) Peso do Fio (kg/m)
     const pesoFioCalc = ((fioNum * fioNum) * massa) / c3;
-
-    // 2) Peso da Tela (kg/m²)
     const pesoM2Calc = (c3 / (fioNum + malhaNum)) * c2 * c1 * pesoFioCalc;
-
-    // 3) Área (m²)
     const areaTotalCalc = Math.max(0, ((largNum + ganhoNum) / c3) * ((compNum + perdaNum) / c3));
-
-    // 4) Peso Total (kg)
     const pesoTotalCalc = pesoM2Calc * areaTotalCalc * qtdNum;
-
-    // 5) Preço m² (R$)
     const precoM2Calc = pesoM2Calc * precoKgNum;
-
-    // 6) Preço Total (R$)
     const precoTotalCalc = pesoTotalCalc * precoKgNum;
 
     setPesoFio(pesoFioCalc);
@@ -155,7 +142,7 @@ export default function Home() {
     window.print();
   };
 
-  // Compartilhar WhatsApp
+  // WhatsApp
   const handleShareWhatsApp = async () => {
     if (
       pesoFio === null ||
@@ -185,8 +172,7 @@ export default function Home() {
     mensagem += `\n\nPeso Bruto: ${pesoTotalFormatado} Kg`;
 
     const encodedMessage = encodeURIComponent(mensagem);
-    const whatsappUrl = `https://wa.me/?text=${encodedMessage}`;
-    window.open(whatsappUrl, '_blank');
+    window.open(`https://wa.me/?text=${encodedMessage}`, '_blank');
   };
 
   // PWA
@@ -214,8 +200,7 @@ export default function Home() {
   const handleInstallApp = async () => {
     if (!deferredPrompt) return;
     deferredPrompt.prompt();
-    const { outcome } = await deferredPrompt.userChoice;
-    console.log(`User response to the install prompt: ${outcome}`);
+    await deferredPrompt.userChoice;
     setDeferredPrompt(null);
     setShowInstallButton(false);
   };
@@ -247,24 +232,22 @@ export default function Home() {
                 Instalar App
               </button>
             )}
-            <button
-              className="btn ghost no-print"
-              onClick={handleShareWhatsApp}
-              style={{ marginRight: '8px' }}
-            >
+
+            <button className="btn ghost no-print" onClick={handleShareWhatsApp} style={{ marginRight: '8px' }}>
               Compartilhar WhatsApp
             </button>
+
             <button className="btn ghost no-print" onClick={handlePrint}>
-  Imprimir PDF
-</button>
-<span
-  className="badge no-print"
-  title={`Build: ${__GIT_COMMIT__ ? __GIT_COMMIT__ : 'desconhecido'} • ${new Date(
-    __BUILD_DATE__
-  ).toLocaleString('pt-BR')}`}
->
-  {__GIT_COMMIT__ ? __GIT_COMMIT__.slice(0, 7) : 'build'}
-</span>
+              Imprimir PDF
+            </button>
+
+            {/* BADGE AUTOMÁTICO COM O COMMIT */}
+            <span
+              className="badge no-print"
+              title={`Build: ${__GIT_COMMIT__} • ${new Date(__BUILD_DATE__).toLocaleString('pt-BR')}`}
+            >
+              {__GIT_COMMIT__.slice(0, 7)}
+            </span>
           </div>
         </header>
 
@@ -285,65 +268,63 @@ export default function Home() {
 
             <div className="bd">
               <div className="inputs">
-                {/* Linha exclusiva – Tipo de Produto */}
+                
+                {/* Tipo Produto */}
                 <div className="control" style={{ gridColumn: 'span 8' }}>
                   <label>Tipo de Produto *</label>
                   <Select value={tipoProduto} onValueChange={setTipoProduto}>
-  <SelectTrigger
-    className="w-full"
-    style={{
-      width: '100%',
-      padding: '10px',
-      borderRadius: '8px',
-      border: '1px solid #333',
-      backgroundColor: '#1a1a1a',
-      color: '#fff',
-      fontSize: '14px',
-      cursor: 'pointer',
-    }}
-  >
-    <SelectValue placeholder="-- Selecione um tipo de produto --" />
-  </SelectTrigger>
+                    <SelectTrigger
+                      className="w-full"
+                      style={{
+                        width: '100%',
+                        padding: '10px',
+                        borderRadius: '8px',
+                        border: '1px solid #333',
+                        backgroundColor: '#1a1a1a',
+                        color: '#fff',
+                        fontSize: '14px',
+                        cursor: 'pointer',
+                      }}
+                    >
+                      <SelectValue placeholder="-- Selecione um tipo de produto --" />
+                    </SelectTrigger>
 
-  {/* FORÇA TEMA ESCURO AQUI */}
-  <SelectContent
-    position="popper"
-    sideOffset={6}
-    style={{
-      backgroundColor: '#1a1a1a',
-      color: '#fff',
-      border: '1px solid rgba(255,255,255,0.14)',
-      borderRadius: 12,
-      boxShadow: 'var(--shadow)',
-      padding: '6px 0',
-      overflow: 'hidden',
-      zIndex: 9999,
-    }}
-  >
-    <div style={{ maxHeight: 320, overflowY: 'auto' }}>
-      {PRODUCT_TYPES.map((type) => (
-        <SelectItem
-          key={type}
-          value={type}
-          /* estilo do item (normal) */
-          style={{
-            padding: '10px 12px',
-            background: 'transparent',
-            color: '#fff',
-            cursor: 'pointer',
-          }}
-          /* Radix usa data-attributes: destacamos com CSS inline via function prop */
-          // @ts-ignore – caso o tipo não aceite 'className' em sua tipagem
-          className="radix-select-item"
-        >
-          {type}
-        </SelectItem>
-      ))}
-    </div>
-  </SelectContent>
-</Select>
+                    <SelectContent
+                      position="popper"
+                      sideOffset={6}
+                      style={{
+                        backgroundColor: '#1a1a1a',
+                        color: '#fff',
+                        border: '1px solid rgba(255,255,255,0.14)',
+                        borderRadius: 12,
+                        boxShadow: 'var(--shadow)',
+                        padding: '6px 0',
+                        overflow: 'hidden',
+                        zIndex: 9999,
+                      }}
+                    >
+                      <div style={{ maxHeight: 320, overflowY: 'auto' }}>
+                        {PRODUCT_TYPES.map((type) => (
+                          <SelectItem
+                            key={type}
+                            value={type}
+                            className="radix-select-item"
+                            style={{
+                              padding: '10px 12px',
+                              background: 'transparent',
+                              color: '#fff',
+                              cursor: 'pointer',
+                            }}
+                          >
+                            {type}
+                          </SelectItem>
+                        ))}
+                      </div>
+                    </SelectContent>
+                  </Select>
                 </div>
-                {/* Linha exclusiva – Acabamento/Tipo */}
+
+                {/* Acabamento */}
                 <div className="control" style={{ gridColumn: 'span 8' }}>
                   <label>Acabamento/Tipo (Opcional)</label>
                   <input
@@ -364,7 +345,7 @@ export default function Home() {
                   />
                 </div>
 
-                {/* Demais campos (mesma linha/grid padrão) */}
+                {/* Campos adicionais */}
                 <div className="control">
                   <label>Malha (mm)</label>
                   <input
@@ -431,7 +412,7 @@ export default function Home() {
                   />
                 </div>
 
-                {/* Parâmetros bloqueados (listas suspensas) */}
+                {/* Constantes */}
                 {showConstantes && (
                   <div className="constantes-container">
                     <div className="control">
@@ -513,7 +494,6 @@ export default function Home() {
                 <div className="kpi">
                   <h4>Área total (m²)</h4>
                   <div className="val">{areaTotal !== null ? formatNumber(areaTotal) : '—'}</div>
-                  <div className="sub"></div>
                 </div>
               </div>
 
@@ -522,10 +502,12 @@ export default function Home() {
                   <h4>Peso Total (kg)</h4>
                   <div className="val">{pesoTotal !== null ? formatNumber(pesoTotal) : '—'}</div>
                 </div>
+
                 <div className="kpi">
                   <h4>Preço m² (R$)</h4>
                   <div className="val">{precoM2 !== null ? formatCurrency(precoM2) : '—'}</div>
                 </div>
+
                 <div className="kpi">
                   <h4>Preço Total (R$)</h4>
                   <div className="val">{precoTotal !== null ? formatCurrency(precoTotal) : '—'}</div>
@@ -543,4 +525,5 @@ export default function Home() {
     </div>
   );
 }
+
 
