@@ -5,6 +5,19 @@ import fs from "node:fs";
 import path from "path";
 import { defineConfig } from "vite";
 import { vitePluginManusRuntime } from "vite-plugin-manus-runtime";
+import { execSync } from "node:child_process";
+
+// 🔹 Pega o hash curto do commit atual (ou "dev" se não conseguir)
+const GIT_COMMIT = (() => {
+  try {
+    return execSync("git rev-parse --short HEAD").toString().trim();
+  } catch {
+    return "dev";
+  }
+})();
+
+// 🔹 Data/hora da build
+const BUILD_DATE = new Date().toISOString();
 
 const plugins = [react(), tailwindcss(), jsxLocPlugin(), vitePluginManusRuntime()];
 
@@ -42,9 +55,11 @@ export default defineConfig({
     },
   },
 
-  // 👇 AQUI entra a parte nova (injeção do hash da build)
+  // 👇 Injeção do hash da build + data da build
   define: {
-  __GIT_COMMIT__: JSON.stringify(GIT_COMMIT),
-  __BUILD_TIME__: JSON.stringify(BUILD_TIME),
-},
+    __GIT_COMMIT__: JSON.stringify(GIT_COMMIT),
+    __BUILD_DATE__: JSON.stringify(BUILD_DATE),
+  },
+});
+
 
