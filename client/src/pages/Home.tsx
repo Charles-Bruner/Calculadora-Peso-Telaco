@@ -216,24 +216,15 @@ export default function Home() {
     return isStandaloneMedia || isIOSStandalone;
   };
 
-  // PWA: controla visibilidade do botão de instalar por build
+  // Marca como instalado se já estiver em modo standalone (mas não mostra botão)
   useEffect(() => {
     try {
-      const alreadyInstalled = localStorage.getItem(INSTALL_KEY) === '1';
-
       if (isStandaloneMode()) {
-        // Se já está aberto como PWA, marca como instalado e some
         localStorage.setItem(INSTALL_KEY, '1');
-        setShowInstallButton(false);
-      } else if (!alreadyInstalled) {
-        // No navegador e ainda não instalou essa build → mostra botão
-        setShowInstallButton(true);
-      } else {
         setShowInstallButton(false);
       }
     } catch (err) {
-      console.error('Erro ao checar instalação do PWA:', err);
-      // Se der problema com localStorage, não quebra; só esconde o botão
+      console.error('Erro ao checar modo standalone:', err);
       setShowInstallButton(false);
     }
   }, [INSTALL_KEY]);
@@ -243,14 +234,20 @@ export default function Home() {
     const handleBeforeInstallPrompt = (e: Event) => {
       e.preventDefault();
       setDeferredPrompt(e as BeforeInstallPromptEvent);
-      // Se ainda não marcamos como instalado, garante botão visível
+
       try {
         const alreadyInstalled = localStorage.getItem(INSTALL_KEY) === '1';
+        // Só mostra o botão se:
+        // - ainda não marcamos como instalado para essa build
+        // - não está em modo standalone
         if (!alreadyInstalled && !isStandaloneMode()) {
           setShowInstallButton(true);
         }
       } catch {
-        // ignora
+        // se der erro de localStorage, ainda dá pra mostrar o botão
+        if (!isStandaloneMode()) {
+          setShowInstallButton(true);
+        }
       }
     };
 
@@ -278,31 +275,22 @@ export default function Home() {
 
   // Handler do botão "Instalar App"
   const handleInstallApp = async () => {
-    if (deferredPrompt) {
-      deferredPrompt.prompt();
-      const { outcome } = await deferredPrompt.userChoice;
-      console.log(`User response to the install prompt: ${outcome}`);
+    if (!deferredPrompt) return;
 
-      if (outcome === 'accepted') {
-        try {
-          localStorage.setItem(INSTALL_KEY, '1');
-        } catch {
-          // ignora
-        }
-        setShowInstallButton(false);
+    deferredPrompt.prompt();
+    const { outcome } = await deferredPrompt.userChoice;
+    console.log(`User response to the install prompt: ${outcome}`);
+
+    if (outcome === 'accepted') {
+      try {
+        localStorage.setItem(INSTALL_KEY, '1');
+      } catch {
+        // ignora
       }
-
-      setDeferredPrompt(null);
-      return;
+      setShowInstallButton(false);
     }
 
-    // Fallback para navegadores sem beforeinstallprompt
-    alert(
-      'Para instalar o app:\n\n' +
-        '• No computador (Chrome/Edge): clique no ícone de instalação ao lado da barra de endereço.\n' +
-        '• No Android: abra o menu ⋮ e toque em "Instalar aplicativo" ou "Adicionar à tela inicial".\n' +
-        '• No iPhone (Safari): toque em "Compartilhar" → "Adicionar à Tela de Início".'
-    );
+    setDeferredPrompt(null);
   };
 
   // 🔄 Auto-update total quando a build mudar (web + PWA)
@@ -374,11 +362,11 @@ export default function Home() {
             </button>
             <span
               className="badge no-print"
-              title={`Build: ${
-                __GIT_COMMIT__ || 'local'
-              } — ${new Date(__BUILD_DATE__).toLocaleString('pt-BR')}`}
+              title={`Build: ${BUILD_HASH} — ${new Date(
+                __BUILD_DATE__
+              ).toLocaleString('pt-BR')}`}
             >
-              {__GIT_COMMIT__ || 'local'}
+              {BUILD_HASH}
             </span>
           </div>
         </header>
@@ -670,6 +658,7 @@ export default function Home() {
     </div>
   );
 }
+
 
 
 
