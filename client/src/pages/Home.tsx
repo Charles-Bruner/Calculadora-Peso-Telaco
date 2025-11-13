@@ -374,9 +374,9 @@ export default function Home() {
             </button>
             <span
   className="badge no-print"
-  title={`Build: ${__GIT_COMMIT__ || "local"} — ${new Date(__BUILD_TIME__).toLocaleString("pt-BR")}`}
+  title={`Build: ${__GIT_COMMIT__ || 'local'} — ${new Date(__BUILD_TIME__).toLocaleString('pt-BR')}`}
 >
-  {__GIT_COMMIT__ || "local"}
+  {__GIT_COMMIT__ || 'local'}
 </span>
           </div>
         </header>
