@@ -373,11 +373,13 @@ export default function Home() {
               Imprimir PDF
             </button>
             <span
-  className="badge no-print"
-  title={`Build: ${__GIT_COMMIT__ || 'local'} — ${new Date(__BUILD_TIME__).toLocaleString('pt-BR')}`}
->
-  {__GIT_COMMIT__ || 'local'}
-</span>
+              className="badge no-print"
+              title={`Build: ${
+                __GIT_COMMIT__ || 'local'
+              } — ${new Date(__BUILD_DATE__).toLocaleString('pt-BR')}`}
+            >
+              {__GIT_COMMIT__ || 'local'}
+            </span>
           </div>
         </header>
 
@@ -668,6 +670,7 @@ export default function Home() {
     </div>
   );
 }
+
 
 
 
