@@ -1,8 +1,14 @@
 import { useState, useEffect } from 'react';
-import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '../components/ui/select';
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from '../components/ui/select';
 import './Home.css';
 
-// Variáveis globais geradas automaticamente no build
+// Injetadas pelo Vite (vite.config.ts -> define)
 declare const __GIT_COMMIT__: string;
 declare const __BUILD_DATE__: string;
 
@@ -34,7 +40,7 @@ export default function Home() {
     'TELA PV INOX AISI 316',
   ];
 
-  // Estados para os campos de entrada
+  // Entradas
   const [tipoProduto, setTipoProduto] = useState('');
   const [acabamentoTipo, setAcabamentoTipo] = useState('');
   const [malha, setMalha] = useState('');
@@ -46,10 +52,14 @@ export default function Home() {
   const [precoKg, setPrecoKg] = useState('');
   const [qtd, setQtd] = useState('');
   const [showConstantes, setShowConstantes] = useState(false);
-  const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
-  const [showInstallButton, setShowInstallButton] = useState(false);
 
-  // Estados para os resultados
+  // PWA
+  const [deferredPrompt, setDeferredPrompt] =
+    useState<BeforeInstallPromptEvent | null>(null);
+  // começa como true para o botão sempre aparecer (desktop / mobile)
+  const [showInstallButton, setShowInstallButton] = useState(true);
+
+  // Resultados
   const [pesoFio, setPesoFio] = useState<number | null>(null);
   const [pesoM2, setPesoM2] = useState<number | null>(null);
   const [areaTotal, setAreaTotal] = useState<number | null>(null);
@@ -57,7 +67,7 @@ export default function Home() {
   const [precoM2, setPrecoM2] = useState<number | null>(null);
   const [precoTotal, setPrecoTotal] = useState<number | null>(null);
 
-  // Constantes
+  // Constantes de cálculo
   const massa = 6.165;
   const c1 = 1.1;
   const c2 = 2;
@@ -79,12 +89,18 @@ export default function Home() {
 
   // Formatadores
   const formatNumber = (num: number, decimals: number = 3): string =>
-    new Intl.NumberFormat('pt-BR', { minimumFractionDigits: decimals, maximumFractionDigits: decimals }).format(num);
+    new Intl.NumberFormat('pt-BR', {
+      minimumFractionDigits: decimals,
+      maximumFractionDigits: decimals,
+    }).format(num);
 
   const formatCurrency = (num: number): string =>
-    new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(num);
+    new Intl.NumberFormat('pt-BR', {
+      style: 'currency',
+      currency: 'BRL',
+    }).format(num);
 
-  // Cálculo
+  // Cálculo principal
   const calc = () => {
     if (!validateInputs()) {
       alert(
@@ -102,11 +118,25 @@ export default function Home() {
     const precoKgNum = val(precoKg);
     const qtdNum = Math.max(1, val(qtd)) || 1;
 
+    // 1) Peso do Fio (kg/m)
     const pesoFioCalc = ((fioNum * fioNum) * massa) / c3;
+
+    // 2) Peso da Tela (kg/m²)
     const pesoM2Calc = (c3 / (fioNum + malhaNum)) * c2 * c1 * pesoFioCalc;
-    const areaTotalCalc = Math.max(0, ((largNum + ganhoNum) / c3) * ((compNum + perdaNum) / c3));
+
+    // 3) Área (m²)
+    const areaTotalCalc = Math.max(
+      0,
+      ((largNum + ganhoNum) / c3) * ((compNum + perdaNum) / c3)
+    );
+
+    // 4) Peso Total (kg)
     const pesoTotalCalc = pesoM2Calc * areaTotalCalc * qtdNum;
+
+    // 5) Preço m² (R$)
     const precoM2Calc = pesoM2Calc * precoKgNum;
+
+    // 6) Preço Total (R$)
     const precoTotalCalc = pesoTotalCalc * precoKgNum;
 
     setPesoFio(pesoFioCalc);
@@ -117,7 +147,7 @@ export default function Home() {
     setPrecoTotal(precoTotalCalc);
   };
 
-  // Limpar
+  // Limpar tudo
   const reset = () => {
     setTipoProduto('');
     setAcabamentoTipo('');
@@ -137,12 +167,12 @@ export default function Home() {
     setPrecoTotal(null);
   };
 
-  // Imprimir
+  // Imprimir PDF (A4 retrato via CSS @media print)
   const handlePrint = () => {
     window.print();
   };
 
-  // WhatsApp
+  // Compartilhar via WhatsApp
   const handleShareWhatsApp = async () => {
     if (
       pesoFio === null ||
@@ -160,7 +190,6 @@ export default function Home() {
     const fioFormatado = parseFloat(fio).toFixed(2).replace('.', ',');
     const compFormatado = parseInt(comp);
     const largFormatado = parseInt(larg);
-
     const pesoTotalFormatado = formatNumber(pesoTotal, 2);
 
     let mensagem = `${tipoProduto} - AB ${malhaFormatada} MM - FIO ${fioFormatado} MM - ${compFormatado} X ${largFormatado} MM`;
@@ -172,11 +201,60 @@ export default function Home() {
     mensagem += `\n\nPeso Bruto: ${pesoTotalFormatado} Kg`;
 
     const encodedMessage = encodeURIComponent(mensagem);
-    window.open(`https://wa.me/?text=${encodedMessage}`, '_blank');
+    const whatsappUrl = `https://wa.me/?text=${encodedMessage}`;
+    window.open(whatsappUrl, '_blank');
   };
 
-  // PWA
-    // 🔄 Auto-update total quando a build mudar
+  // PWA: captura beforeinstallprompt + appinstalled
+  useEffect(() => {
+    const handleBeforeInstallPrompt = (e: Event) => {
+      e.preventDefault();
+      setDeferredPrompt(e as BeforeInstallPromptEvent);
+      // botão já começa true, não precisamos mexer aqui
+    };
+
+    const handleAppInstalled = () => {
+      setShowInstallButton(false);
+      setDeferredPrompt(null);
+    };
+
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    window.addEventListener('appinstalled', handleAppInstalled);
+
+    return () => {
+      window.removeEventListener(
+        'beforeinstallprompt',
+        handleBeforeInstallPrompt
+      );
+      window.removeEventListener('appinstalled', handleAppInstalled);
+    };
+  }, []);
+
+  // Handler do botão "Instalar App"
+  const handleInstallApp = async () => {
+    if (deferredPrompt) {
+      deferredPrompt.prompt();
+      const { outcome } = await deferredPrompt.userChoice;
+      console.log(`User response to the install prompt: ${outcome}`);
+
+      if (outcome === 'accepted') {
+        setShowInstallButton(false);
+      }
+
+      setDeferredPrompt(null);
+      return;
+    }
+
+    // Fallback: navegador não disparou o evento
+    alert(
+      'Para instalar o app:\n\n' +
+        '• No computador (Chrome/Edge): clique no ícone de instalação ao lado da barra de endereço.\n' +
+        '• No Android: abra o menu ⋮ e toque em "Instalar aplicativo" ou "Adicionar à tela inicial".\n' +
+        '• No iPhone (Safari): toque em "Compartilhar" → "Adicionar à Tela de Início".'
+    );
+  };
+
+  // 🔄 Auto-update total quando a build mudar (web + PWA)
   useEffect(() => {
     const currentBuild = __GIT_COMMIT__ || '';
     const STORAGE_KEY = 'telaco_calc_build_hash';
@@ -184,9 +262,7 @@ export default function Home() {
     try {
       const savedBuild = localStorage.getItem(STORAGE_KEY);
 
-      // Se já existe uma build salva E ela mudou -> limpar caches + recarregar
       if (savedBuild && savedBuild !== currentBuild) {
-        // Atualiza o hash salvo para evitar loop
         localStorage.setItem(STORAGE_KEY, currentBuild);
 
         if ('caches' in window) {
@@ -200,23 +276,12 @@ export default function Home() {
           window.location.reload();
         }
       } else if (!savedBuild && currentBuild) {
-        // Primeira vez: só salva o hash atual
         localStorage.setItem(STORAGE_KEY, currentBuild);
       }
     } catch (err) {
-      // Se der qualquer erro com localStorage ou caches, não quebra o app
       console.error('Falha ao verificar/atualizar build:', err);
     }
   }, []);
-
-
-  const handleInstallApp = async () => {
-    if (!deferredPrompt) return;
-    deferredPrompt.prompt();
-    await deferredPrompt.userChoice;
-    setDeferredPrompt(null);
-    setShowInstallButton(false);
-  };
 
   return (
     <div className="calculator-container">
@@ -230,7 +295,8 @@ export default function Home() {
             <div>
               <h1>Calculadora de Peso de Tela</h1>
               <div className="hint">
-                Tela para peneiramento industrial — modelo de cálculo com constantes configuráveis
+                Tela para peneiramento industrial — modelo de cálculo com
+                constantes configuráveis
               </div>
             </div>
           </div>
@@ -245,21 +311,18 @@ export default function Home() {
                 Instalar App
               </button>
             )}
-
-            <button className="btn ghost no-print" onClick={handleShareWhatsApp} style={{ marginRight: '8px' }}>
+            <button
+              className="btn ghost no-print"
+              onClick={handleShareWhatsApp}
+              style={{ marginRight: '8px' }}
+            >
               Compartilhar WhatsApp
             </button>
-
             <button className="btn ghost no-print" onClick={handlePrint}>
               Imprimir PDF
             </button>
-
-            {/* BADGE AUTOMÁTICO COM O COMMIT */}
-            <span
-              className="badge no-print"
-              title={`Build: ${__GIT_COMMIT__} • ${new Date(__BUILD_DATE__).toLocaleString('pt-BR')}`}
-            >
-              {__GIT_COMMIT__.slice(0, 7)}
+            <span className="badge no-print">
+              {__GIT_COMMIT__ ? __GIT_COMMIT__.slice(0, 7) : 'build'}
             </span>
           </div>
         </header>
@@ -281,8 +344,7 @@ export default function Home() {
 
             <div className="bd">
               <div className="inputs">
-                
-                {/* Tipo Produto */}
+                {/* Linha exclusiva – Tipo de Produto */}
                 <div className="control" style={{ gridColumn: 'span 8' }}>
                   <label>Tipo de Produto *</label>
                   <Select value={tipoProduto} onValueChange={setTipoProduto}>
@@ -321,6 +383,7 @@ export default function Home() {
                           <SelectItem
                             key={type}
                             value={type}
+                            // @ts-ignore
                             className="radix-select-item"
                             style={{
                               padding: '10px 12px',
@@ -337,14 +400,16 @@ export default function Home() {
                   </Select>
                 </div>
 
-                {/* Acabamento */}
+                {/* Linha exclusiva – Acabamento/Tipo */}
                 <div className="control" style={{ gridColumn: 'span 8' }}>
                   <label>Acabamento/Tipo (Opcional)</label>
                   <input
                     type="text"
                     placeholder="Ex: SEM GANCHO - OND VB"
                     value={acabamentoTipo}
-                    onChange={(e) => setAcabamentoTipo(e.target.value.toUpperCase())}
+                    onChange={(e) =>
+                      setAcabamentoTipo(e.target.value.toUpperCase())
+                    }
                     style={{
                       textTransform: 'uppercase',
                       width: '100%',
@@ -358,7 +423,7 @@ export default function Home() {
                   />
                 </div>
 
-                {/* Campos adicionais */}
+                {/* Demais campos */}
                 <div className="control">
                   <label>Malha (mm)</label>
                   <input
@@ -425,7 +490,7 @@ export default function Home() {
                   />
                 </div>
 
-                {/* Constantes */}
+                {/* Parâmetros bloqueados */}
                 {showConstantes && (
                   <div className="constantes-container">
                     <div className="control">
@@ -498,32 +563,45 @@ export default function Home() {
               <div className="results">
                 <div className="kpi">
                   <h4>Peso do Fio (kg/m)</h4>
-                  <div className="val">{pesoFio !== null ? formatNumber(pesoFio) : '—'}</div>
+                  <div className="val">
+                    {pesoFio !== null ? formatNumber(pesoFio) : '—'}
+                  </div>
                 </div>
                 <div className="kpi">
                   <h4>Peso da Tela (kg/m²)</h4>
-                  <div className="val">{pesoM2 !== null ? formatNumber(pesoM2) : '—'}</div>
+                  <div className="val">
+                    {pesoM2 !== null ? formatNumber(pesoM2) : '—'}
+                  </div>
                 </div>
                 <div className="kpi">
                   <h4>Área total (m²)</h4>
-                  <div className="val">{areaTotal !== null ? formatNumber(areaTotal) : '—'}</div>
+                  <div className="val">
+                    {areaTotal !== null ? formatNumber(areaTotal) : '—'}
+                  </div>
+                  <div className="sub" />
                 </div>
               </div>
 
               <div className="results" style={{ marginTop: '12px' }}>
                 <div className="kpi">
                   <h4>Peso Total (kg)</h4>
-                  <div className="val">{pesoTotal !== null ? formatNumber(pesoTotal) : '—'}</div>
+                  <div className="val">
+                    {pesoTotal !== null ? formatNumber(pesoTotal) : '—'}
+                  </div>
                 </div>
-
                 <div className="kpi">
                   <h4>Preço m² (R$)</h4>
-                  <div className="val">{precoM2 !== null ? formatCurrency(precoM2) : '—'}</div>
+                  <div className="val">
+                    {precoM2 !== null ? formatCurrency(precoM2) : '—'}
+                  </div>
                 </div>
-
                 <div className="kpi">
                   <h4>Preço Total (R$)</h4>
-                  <div className="val">{precoTotal !== null ? formatCurrency(precoTotal) : '—'}</div>
+                  <div className="val">
+                    {precoTotal !== null
+                      ? formatCurrency(precoTotal)
+                      : '—'}
+                  </div>
                 </div>
               </div>
             </div>
@@ -532,11 +610,12 @@ export default function Home() {
 
         <footer>
           <div>© Telaço – Ferramenta interna.</div>
-          <div></div>
+          <div />
         </footer>
       </div>
     </div>
   );
 }
+
 
 
