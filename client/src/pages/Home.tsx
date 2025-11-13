@@ -255,9 +255,16 @@ export default function Home() {
               Compartilhar WhatsApp
             </button>
             <button className="btn ghost no-print" onClick={handlePrint}>
-              Imprimir PDF
-            </button>
-            <span className="badge no-print">v1.5.0 • Telaço</span>
+  Imprimir PDF
+</button>
+<span
+  className="badge no-print"
+  title={`Build: ${__GIT_COMMIT__ ? __GIT_COMMIT__ : 'desconhecido'} • ${new Date(
+    __BUILD_DATE__
+  ).toLocaleString('pt-BR')}`}
+>
+  {__GIT_COMMIT__ ? __GIT_COMMIT__.slice(0, 7) : 'build'}
+</span>
           </div>
         </header>
 
