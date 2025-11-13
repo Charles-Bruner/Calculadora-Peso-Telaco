@@ -4,6 +4,10 @@ import './Home.css';
 // Se não estiver usando geração de PDF via util, pode remover a importação abaixo.
 // import { generateAndSharePDF } from '../utils/pdfGenerator';
 
+// 👇 ADICIONE ESTAS DUAS LINHAS AQUI
+declare const __GIT_COMMIT__: string;
+declare const __BUILD_DATE__: string;
+
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>;
   userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>;
