@@ -372,9 +372,12 @@ export default function Home() {
             <button className="btn ghost no-print" onClick={handlePrint}>
               Imprimir PDF
             </button>
-            <span className="badge no-print">
-              {BUILD_HASH ? BUILD_HASH.slice(0, 7) : 'build'}
-            </span>
+            <span
+  className="badge no-print"
+  title={`Build: ${__GIT_COMMIT__ || "local"} — ${new Date(__BUILD_TIME__).toLocaleString("pt-BR")}`}
+>
+  {__GIT_COMMIT__ || "local"}
+</span>
           </div>
         </header>
 
