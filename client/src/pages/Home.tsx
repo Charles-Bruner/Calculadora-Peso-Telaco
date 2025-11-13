@@ -199,7 +199,7 @@ export default function Home() {
     window.print();
   };
 
-  // Compartilhar via WhatsApp
+  // Compartilhar via WhatsApp (com regra do "VL")
   const handleShareWhatsApp = async () => {
     if (
       pesoFio === null ||
@@ -224,7 +224,19 @@ export default function Home() {
     const compFormatado = Math.round(compNum);
     const largFormatado = Math.round(largNum);
 
-    let mensagem = `${tipoProduto} - AB ${malhaFormatada} MM - FIO ${fioFormatado} MM - ${compFormatado} X ${largFormatado} MM`;
+    // ✅ Regra do "VL":
+    // Se houver acabamento e ele NÃO for "SEM GANCHO" nem "ESPECIAL",
+    // usa "VL {largura}" no texto
+    const precisaVL =
+      acabamento &&
+      acabamento !== 'SEM GANCHO' &&
+      acabamento !== 'ESPECIAL';
+
+    const larguraTexto = precisaVL
+      ? `VL ${largFormatado}`
+      : `${largFormatado}`;
+
+    let mensagem = `${tipoProduto} - AB ${malhaFormatada} MM - FIO ${fioFormatado} MM - ${compFormatado} X ${larguraTexto} MM`;
 
     // Monta "Acabamento - Tipo" se houver
     let detalhes = '';
@@ -553,7 +565,7 @@ export default function Home() {
                         width: '100%',
                         padding: '10px',
                         borderRadius: '8px',
-                        border: '1px solid #333',
+                        border: '1px solid '#333',
                         backgroundColor: '#1a1a1a',
                         color: '#fff',
                         fontSize: '14px',
@@ -793,10 +805,3 @@ export default function Home() {
     </div>
   );
 }
-
-
-
-
-
-
-
