@@ -41,4 +41,12 @@ export default defineConfig({
       deny: ["**/.*"],
     },
   },
+
+  // 👇 AQUI entra a parte nova (injeção do hash da build)
+  define: {
+    __GIT_COMMIT__: JSON.stringify(
+      process.env.VERCEL_GIT_COMMIT_SHA || process.env.GITHUB_SHA || ""
+    ),
+    __BUILD_DATE__: JSON.stringify(new Date().toISOString()),
+  },
 });
