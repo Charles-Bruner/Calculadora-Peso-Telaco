@@ -55,8 +55,7 @@ export default function Home() {
   const TIPOS = [
     'OND VB',
     'OND DX',
-    'OND WR',     
-    'NÃO SE APLICA',
+    'OND WR',    
   ];
 
   const BUILD_HASH = __GIT_COMMIT__ || 'dev';
@@ -66,6 +65,7 @@ export default function Home() {
   const [tipoProduto, setTipoProduto] = useState('');
   const [acabamento, setAcabamento] = useState('');
   const [tipoAcabamento, setTipoAcabamento] = useState('');
+  const [complemento, setComplemento] = useState('');
   const [malha, setMalha] = useState('');
   const [fio, setFio] = useState('');
   const [comp, setComp] = useState('');
@@ -174,6 +174,7 @@ export default function Home() {
     setTipoProduto('');
     setAcabamento('');
     setTipoAcabamento('');
+    setComplemento('');
     setMalha('');
     setFio('');
     setComp('');
@@ -195,64 +196,68 @@ export default function Home() {
     window.print();
   };
 
-  // Compartilhar via WhatsApp (com regra do "VL")
-const handleShareWhatsApp = async () => {
-  if (
-    pesoFio === null ||
-    pesoM2 === null ||
-    areaTotal === null ||
-    pesoTotal === null ||
-    precoM2 === null ||
-    precoTotal === null
-  ) {
-    alert('Por favor, calcule os valores primeiro antes de compartilhar.');
-    return;
-  }
+  // Compartilhar via WhatsApp (com regra do "VL" e Complemento)
+  const handleShareWhatsApp = async () => {
+    if (
+      pesoFio === null ||
+      pesoM2 === null ||
+      areaTotal === null ||
+      pesoTotal === null ||
+      precoM2 === null ||
+      precoTotal === null
+    ) {
+      alert('Por favor, calcule os valores primeiro antes de compartilhar.');
+      return;
+    }
 
-  const malhaNum = val(malha);
-  const fioNum = val(fio);
-  const compNum = val(comp);
-  const largNum = val(larg);
-  const pesoTotalFormatado = formatNumber(pesoTotal, 2);
+    const malhaNum = val(malha);
+    const fioNum = val(fio);
+    const compNum = val(comp);
+    const largNum = val(larg);
+    const pesoTotalFormatado = formatNumber(pesoTotal, 2);
 
-  const malhaFormatada = malhaNum.toFixed(2).replace('.', ',');
-  const fioFormatado = fioNum.toFixed(2).replace('.', ',');
-  const compFormatado = Math.round(compNum);
-  const largFormatado = Math.round(largNum);
+    const malhaFormatada = malhaNum.toFixed(2).replace('.', ',');
+    const fioFormatado = fioNum.toFixed(2).replace('.', ',');
+    const compFormatado = Math.round(compNum);
+    const largFormatado = Math.round(largNum);
 
-  // ✅ Regra do "VL":
-  // Se o acabamento for diferente de "SEM GANCHO" e "ESPECIAL",
-  // deve adicionar VL antes da largura.
-  const precisaVL =
-    acabamento &&
-    acabamento !== 'SEM GANCHO' &&
-    acabamento !== 'ESPECIAL';
+    // Regra do "VL": se acabamento não for "SEM GANCHO" nem "ESPECIAL"
+    const precisaVL =
+      acabamento &&
+      acabamento !== 'SEM GANCHO' &&
+      acabamento !== 'ESPECIAL';
 
-  const larguraTexto = precisaVL
-    ? `VL ${largFormatado}`
-    : `${largFormatado}`;
+    const larguraTexto = precisaVL
+      ? `VL ${largFormatado}`
+      : `${largFormatado}`;
 
-  let mensagem = `${tipoProduto} - AB ${malhaFormatada} MM - FIO ${fioFormatado} MM - ${compFormatado} X ${larguraTexto} MM`;
+    let mensagem = `${tipoProduto} - AB ${malhaFormatada} MM - FIO ${fioFormatado} MM - ${compFormatado} X ${larguraTexto} MM`;
 
-  // Acabamento + Tipo (se informados)
-  let detalhes = '';
+    // Monta Acabamento + Tipo + Complemento
+    let detalhes = '';
 
-  if (acabamento) detalhes += acabamento;
-  if (tipoAcabamento && tipoAcabamento !== 'NÃO SE APLICA') {
-    detalhes += (detalhes ? ' - ' : '') + tipoAcabamento;
-  }
+    if (acabamento) {
+      detalhes += acabamento;
+    }
 
-  if (detalhes) {
-    mensagem += ` - ${detalhes}`;
-  }
+    if (tipoAcabamento && tipoAcabamento !== 'NÃO SE APLICA') {
+      detalhes += (detalhes ? ' - ' : '') + tipoAcabamento;
+    }
 
-  mensagem += `\n\nPeso Bruto: ${pesoTotalFormatado} Kg`;
+    if (complemento.trim()) {
+      detalhes += complemento.trim().toUpperCase();
+    }
 
-  const encodedMessage = encodeURIComponent(mensagem);
-  const whatsappUrl = `https://wa.me/?text=${encodedMessage}`;
-  window.open(whatsappUrl, '_blank');
-};
+    if (detalhes) {
+      mensagem += ` - ${detalhes}`;
+    }
 
+    mensagem += `\n\nPeso Bruto: ${pesoTotalFormatado} Kg`;
+
+    const encodedMessage = encodeURIComponent(mensagem);
+    const whatsappUrl = `https://wa.me/?text=${encodedMessage}`;
+    window.open(whatsappUrl, '_blank');
+  };
 
   // Detecta se está rodando em modo standalone (PWA)
   const isStandaloneMode = () => {
@@ -283,14 +288,10 @@ const handleShareWhatsApp = async () => {
 
       try {
         const alreadyInstalled = localStorage.getItem(INSTALL_KEY) === '1';
-        // Só mostra o botão se:
-        // - ainda não marcamos como instalado para essa build
-        // - não está em modo standalone
         if (!alreadyInstalled && !isStandaloneMode()) {
           setShowInstallButton(true);
         }
       } catch {
-        // se der erro de localStorage, ainda dá pra mostrar o botão
         if (!isStandaloneMode()) {
           setShowInstallButton(true);
         }
@@ -377,7 +378,7 @@ const handleShareWhatsApp = async () => {
               src="https://i.postimg.cc/gctNgQm4/logo-Telaco-Laranja-horizontal.png"
               alt="Telaço"
             />
-            <div>
+          <div>
               <h1>Calculadora de Peso de Tela</h1>
               <div className="hint">
                 Tela para peneiramento industrial — modelo de cálculo com
@@ -605,6 +606,29 @@ const handleShareWhatsApp = async () => {
                   </Select>
                 </div>
 
+                {/* Complemento */}
+                <div className="control" style={{ gridColumn: 'span 4' }}>
+                  <label>Complemento (Opcional)</label>
+                  <input
+                    type="text"
+                    placeholder="Ex.: +12TB"
+                    value={complemento}
+                    onChange={(e) =>
+                      setComplemento(e.target.value.toUpperCase())
+                    }
+                    style={{
+                      textTransform: 'uppercase',
+                      width: '100%',
+                      padding: '10px',
+                      borderRadius: '8px',
+                      border: '1px solid #333',
+                      backgroundColor: '#1a1a1a',
+                      color: '#fff',
+                      fontSize: '14px',
+                    }}
+                  />
+                </div>
+
                 {/* Demais campos */}
                 <div className="control">
                   <label>Malha (mm)</label>
@@ -799,3 +823,4 @@ const handleShareWhatsApp = async () => {
     </div>
   );
 }
+
