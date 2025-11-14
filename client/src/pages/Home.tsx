@@ -200,65 +200,63 @@ export default function Home() {
   };
 
   // Compartilhar via WhatsApp (com regra do "VL")
-  const handleShareWhatsApp = async () => {
-    if (
-      pesoFio === null ||
-      pesoM2 === null ||
-      areaTotal === null ||
-      pesoTotal === null ||
-      precoM2 === null ||
-      precoTotal === null
-    ) {
-      alert('Por favor, calcule os valores primeiro antes de compartilhar.');
-      return;
-    }
+const handleShareWhatsApp = async () => {
+  if (
+    pesoFio === null ||
+    pesoM2 === null ||
+    areaTotal === null ||
+    pesoTotal === null ||
+    precoM2 === null ||
+    precoTotal === null
+  ) {
+    alert('Por favor, calcule os valores primeiro antes de compartilhar.');
+    return;
+  }
 
-    const malhaNum = val(malha);
-    const fioNum = val(fio);
-    const compNum = val(comp);
-    const largNum = val(larg);
-    const pesoTotalFormatado = formatNumber(pesoTotal, 2);
+  const malhaNum = val(malha);
+  const fioNum = val(fio);
+  const compNum = val(comp);
+  const largNum = val(larg);
+  const pesoTotalFormatado = formatNumber(pesoTotal, 2);
 
-    const malhaFormatada = malhaNum.toFixed(2).replace('.', ',');
-    const fioFormatado = fioNum.toFixed(2).replace('.', ',');
-    const compFormatado = Math.round(compNum);
-    const largFormatado = Math.round(largNum);
+  const malhaFormatada = malhaNum.toFixed(2).replace('.', ',');
+  const fioFormatado = fioNum.toFixed(2).replace('.', ',');
+  const compFormatado = Math.round(compNum);
+  const largFormatado = Math.round(largNum);
 
-    // ✅ Regra do "VL":
-    // Se houver acabamento e ele NÃO for "SEM GANCHO" nem "ESPECIAL",
-    // usa "VL {largura}" no texto
-    const precisaVL =
-      acabamento &&
-      acabamento !== 'SEM GANCHO' &&
-      acabamento !== 'ESPECIAL';
+  // ✅ Regra do "VL":
+  // Se o acabamento for diferente de "SEM GANCHO" e "ESPECIAL",
+  // deve adicionar VL antes da largura.
+  const precisaVL =
+    acabamento &&
+    acabamento !== 'SEM GANCHO' &&
+    acabamento !== 'ESPECIAL';
 
-    const larguraTexto = precisaVL
-      ? `VL ${largFormatado}`
-      : `${largFormatado}`;
+  const larguraTexto = precisaVL
+    ? `VL ${largFormatado}`
+    : `${largFormatado}`;
 
-    let mensagem = `${tipoProduto} - AB ${malhaFormatada} MM - FIO ${fioFormatado} MM - ${compFormatado} X ${larguraTexto} MM`;
+  let mensagem = `${tipoProduto} - AB ${malhaFormatada} MM - FIO ${fioFormatado} MM - ${compFormatado} X ${larguraTexto} MM`;
 
-    // Monta "Acabamento - Tipo" se houver
-    let detalhes = '';
+  // Acabamento + Tipo (se informados)
+  let detalhes = '';
 
-    if (acabamento) {
-      detalhes += acabamento;
-    }
+  if (acabamento) detalhes += acabamento;
+  if (tipoAcabamento && tipoAcabamento !== 'NÃO SE APLICA') {
+    detalhes += (detalhes ? ' - ' : '') + tipoAcabamento;
+  }
 
-    if (tipoAcabamento && tipoAcabamento !== 'NÃO SE APLICA') {
-      detalhes += (detalhes ? ' - ' : '') + tipoAcabamento;
-    }
+  if (detalhes) {
+    mensagem += ` - ${detalhes}`;
+  }
 
-    if (detalhes) {
-      mensagem += ` - ${detalhes}`;
-    }
+  mensagem += `\n\nPeso Bruto: ${pesoTotalFormatado} Kg`;
 
-    mensagem += `\n\nPeso Bruto: ${pesoTotalFormatado} Kg`;
+  const encodedMessage = encodeURIComponent(mensagem);
+  const whatsappUrl = `https://wa.me/?text=${encodedMessage}`;
+  window.open(whatsappUrl, '_blank');
+};
 
-    const encodedMessage = encodeURIComponent(mensagem);
-    const whatsappUrl = `https://wa.me/?text=${encodedMessage}`;
-    window.open(whatsappUrl, '_blank');
-  };
 
   // Detecta se está rodando em modo standalone (PWA)
   const isStandaloneMode = () => {
