@@ -55,11 +55,7 @@ export default function Home() {
   const TIPOS = [
     'OND VB',
     'OND DX',
-    'OND WR',
-    'AUTOLIMPANTE VENO',
-    'AUTOLIMPANTE SERPA',
-    'HARPA III',
-    'MODULAR',
+    'OND WR',     
     'NÃO SE APLICA',
   ];
 
