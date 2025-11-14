@@ -563,7 +563,7 @@ const handleShareWhatsApp = async () => {
                         width: '100%',
                         padding: '10px',
                         borderRadius: '8px',
-                        border: '1px solid '#333',
+                        border: '1px solid #333',
                         backgroundColor: '#1a1a1a',
                         color: '#fff',
                         fontSize: '14px',
