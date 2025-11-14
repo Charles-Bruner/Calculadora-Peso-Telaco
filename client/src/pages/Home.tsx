@@ -436,7 +436,7 @@ export default function Home() {
             <div className="bd">
               <div className="inputs">
                 {/* Linha exclusiva – Tipo de Produto */}
-                <div className="control" style={{ gridColumn: 'span 8' }}>
+                <div className="control" style={{ gridColumn: 'span 12' }}>
                   <label>Tipo de Produto *</label>
                   <Select value={tipoProduto} onValueChange={setTipoProduto}>
                     <SelectTrigger
