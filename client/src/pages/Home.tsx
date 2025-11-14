@@ -625,6 +625,8 @@ export default function Home() {
                       backgroundColor: '#1a1a1a',
                       color: '#fff',
                       fontSize: '14px',
+                      height: '40px',
+                      boxSizing: 'border-box',
                     }}
                   />
                 </div>
