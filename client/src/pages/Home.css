@@ -568,6 +568,12 @@ footer {
     width: 100% !important;
   }
 }
+/* Em telas maiores, não deixa o label quebrar em 2 linhas */
+@media (min-width: 1024px) {
+  .inputs .control label {
+    white-space: nowrap;
+  }
+}
 
 
 
