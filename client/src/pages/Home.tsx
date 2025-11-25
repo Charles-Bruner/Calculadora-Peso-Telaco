@@ -21,7 +21,6 @@ interface BeforeInstallPromptEvent extends Event {
 export default function Home() {
   // Tipos de produto
   const PRODUCT_TYPES = [
-    'PENEIRA ATC 1045',
     'PENEIRA ATC 1050',
     'PENEIRA ATC 1065',
     'PENEIRA ATC 1065 AUTOLIMPANTE VENO',
